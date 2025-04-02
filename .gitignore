@@ -8,7 +8,7 @@ app/backend/build
 .DS_Store
 
 # prisma
-app/backend/prisma/migrations
+app/backend/src/infra/prisma/migrations
 
 # Tests
 app/backend/coverage

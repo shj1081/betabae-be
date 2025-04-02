@@ -1,4 +1,4 @@
-import { ExceptionCode } from './custom.exception.code';
+import { ExceptionCode } from 'src/enums/custom.exception.code';
 
 export class ErrorResponseDto {
   code: ExceptionCode;

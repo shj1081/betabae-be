@@ -4,13 +4,63 @@
 
 ```
 betabae/
-├── app/
-│   └── backend/          # NestJS backend server
-│       ├── prisma/     # Prisma schema and migrations
-│       ├── src/        # Source code
-│       └── test/       # Test files
-├── infra-dev/          # Development infrastructure setup
-└── Makefile            # Project commands collection
+├── Makefile                        # Root-level: CLI helper commands
+├── README.md                       # Project documentation
+├── .gitignore
+│
+├── infra-dev/                      # Local development infrastructure
+│   ├── docker-compose.yaml
+│   ├── redis.conf
+│   └── README.md
+│
+└── app/
+    └── backend/                    # NestJS backend app
+        ├── .env
+        ├── .prettierrc
+        ├── eslint.config.mjs
+        ├── nest-cli.json
+        ├── package.json
+        ├── tsconfig.json
+        ├── tsconfig.build.json
+        ├── yarn.lock
+        ├── README.md               # Backend-specific README
+        │
+        ├── test/
+        │   ├── app.e2e-spec.ts
+        │   └── jest-e2e.json
+        │
+        ├── src/
+        │   ├── main.ts
+        │   ├── app.module.ts
+        │
+        │   ├── modules/
+        │   │   └── auth/
+        │   │       ├── auth.controller.ts
+        │   │       ├── auth.service.ts
+        │   │       └── auth.module.ts
+        │
+        │   ├── infra/
+        │   │   ├── prisma/
+        │   │   │   ├── schema.prisma
+        │   │   │   ├── migrations/
+        │   │   │   ├── prisma.module.ts
+        │   │   │   └── prisma.service.ts
+        │   │   └── redis/
+        │   │       ├── redis.module.ts
+        │   │       └── redis.service.ts
+        │
+        │   ├── dto/
+        │   │   ├── auth/
+        │   │   │   ├── login.request.dto.ts
+        │   │   │   └── register.request.dto.ts
+        │   │   └── common/
+        │   │       ├── basic.response.dto.ts
+        │   │       └── error.response.dto.ts
+        │
+        │   ├── enums/
+        │   │   └── custom.exception.code.ts
+        │
+        │   └── (optional: common/, interceptors/, guards/, etc.)
 ```
 
 ## Tech Stacks

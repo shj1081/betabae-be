@@ -28,10 +28,10 @@ build:
 
 # Prisma commands
 prisma-generate:
-	cd $(BACKEND_PATH) && npx prisma generate
+	cd $(BACKEND_PATH) && yarn prisma:generate
 
 prisma-migrate:
-	cd $(BACKEND_PATH) && npx prisma migrate dev
+	cd $(BACKEND_PATH) && yarn prisma:migrate
 
 
 # Clean up

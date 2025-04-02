@@ -7,11 +7,11 @@ import {
   Res,
 } from '@nestjs/common';
 import { Response } from 'express';
+import { LoginRequestDto } from 'src/dto/auth/login.request.dto';
+import { RegisterRequestDto } from 'src/dto/auth/register.request.dto';
 import { BasicResponseDto } from 'src/dto/common/basic.response.dto';
-import { ExceptionCode } from 'src/dto/common/custom.exception.code';
 import { ErrorResponseDto } from 'src/dto/common/error.response.dto';
-import { LoginRequestDto } from '../dto/auth/login.request.dto';
-import { RegisterRequestDto } from '../dto/auth/register.request.dto';
+import { ExceptionCode } from 'src/enums/custom.exception.code';
 import { AuthService } from './auth.service';
 
 // TODO: refine response

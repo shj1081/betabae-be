@@ -5,12 +5,12 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
-import { ExceptionCode } from 'src/dto/common/custom.exception.code';
+import { RegisterRequestDto } from 'src/dto/auth/register.request.dto';
 import { ErrorResponseDto } from 'src/dto/common/error.response.dto';
+import { ExceptionCode } from 'src/enums/custom.exception.code';
+import { PrismaService } from 'src/infra/prisma/prisma.service';
+import { RedisService } from 'src/infra/redis/redis.service';
 import { v4 as uuidv4 } from 'uuid';
-import { RegisterRequestDto } from '../dto/auth/register.request.dto';
-import { PrismaService } from '../prisma/prisma.service';
-import { RedisService } from '../redis/redis.service';
 
 @Injectable()
 export class AuthService {
