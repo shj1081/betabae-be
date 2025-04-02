@@ -1,0 +1,32 @@
+services:
+    mysql:
+        image: mysql:8.0
+        container_name: mysql
+        environment:
+            MYSQL_ROOT_PASSWORD: 1234
+            MYSQL_DATABASE: betabae
+        ports:
+            - '3306:3306'
+        networks:
+            - app-network
+
+    redis:
+        image: redis:alpine
+        container_name: redis
+        command: sh -c "mkdir -p /var/log/redis && chown redis:redis /var/log/redis && redis-server /usr/local/etc/redis/redis.conf"
+        ports:
+            - '6379:6379'
+        volumes:
+            - ./redis.conf:/usr/local/etc/redis/redis.conf
+            - redis_data:/data
+            - redis_logs:/var/log/redis
+        networks:
+            - app-network
+
+networks:
+    app-network:
+        driver: bridge
+
+volumes:
+    redis_data:
+    redis_logs:

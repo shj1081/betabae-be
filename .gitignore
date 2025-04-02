@@ -1,0 +1,48 @@
+# compiled output
+app/backend/dist
+app/backend/node_modules
+app/backend/build
+
+
+# OS
+.DS_Store
+
+# prisma
+app/backend/prisma/migrations
+
+# Tests
+app/backend/coverage
+app/backend/.nyc_output
+
+# IDEs and editors
+app/backend/.idea
+app/backend/.project
+app/backend/.classpath
+app/backend/.c9/
+app/backend/*.launch
+app/backend/.settings/
+app/backend/*.sublime-workspace
+
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# env files
+app/backend/.env
+
+
+# temp directory
+app/backend/.temp
+app/backend/.tmp
+
+# Runtime data
+app/backend/pids
+app/backend/*.pid
+app/backend/*.seed
+app/backend/*.pid.lock
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+app/backend/report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json

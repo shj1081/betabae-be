@@ -1,0 +1,92 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id        Int      @id @default(autoincrement())
+  username       String   @unique
+  email          String   @unique
+  password_hash  String
+  profile        UserProfile?
+  surveyResponse UserSurveyResponse?
+  messages       Message[]
+  matchesAsUser1 Match[]  @relation("User1")
+  matchesAsUser2 Match[]  @relation("User2")
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+}
+
+model UserProfile {
+  profile_id       Int    @id @default(autoincrement())
+  display_name     String?
+  bio              String?
+  profile_media_id Int?
+  user_id          Int    @unique
+  user             User   @relation(fields: [user_id], references: [user_id])
+  media            Media? @relation(fields: [profile_media_id], references: [media_id])
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
+}
+
+model UserSurveyResponse {
+  survey_id    Int    @id @default(autoincrement())
+  user_id      Int    @unique
+  survey_data  Json
+  user         User   @relation(fields: [user_id], references: [user_id])
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+}
+
+model Match {
+  match_id     Int    @id @default(autoincrement())
+  user1_id     Int
+  user2_id     Int
+  user1        User   @relation("User1", fields: [user1_id], references: [user_id])
+  user2        User   @relation("User2", fields: [user2_id], references: [user_id])
+  user1_consent Boolean @default(false)
+  user2_consent Boolean @default(false)
+  status        String  @default("pending")
+  conversations Conversation[]
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
+
+model Conversation {
+  conversation_id Int      @id @default(autoincrement())
+  match_id        Int
+  match           Match    @relation(fields: [match_id], references: [match_id])
+  type            String   @default("betaBae")
+  messages        Message[]
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+}
+
+model Message {
+  message_id          Int      @id @default(autoincrement())
+  conversation_id     Int
+  sender_id           Int
+  message_text        String
+  analysis            Json?
+  sent_at             DateTime @default(now())
+  is_read             Boolean  @default(false)
+  attachment_media_id Int?
+  conversation        Conversation @relation(fields: [conversation_id], references: [conversation_id])
+  sender              User         @relation(fields: [sender_id], references: [user_id])
+  media               Media?       @relation(fields: [attachment_media_id], references: [media_id])
+}
+
+model Media {
+  media_id    Int    @id @default(autoincrement())
+  file_url    String
+  file_type   String
+  context     String?
+  messages    Message[]
+  userProfiles UserProfile[]
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
