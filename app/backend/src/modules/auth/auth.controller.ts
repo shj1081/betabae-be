@@ -4,9 +4,10 @@ import {
   Body,
   Controller,
   Post,
+  Req,
   Res,
 } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { LoginRequestDto } from 'src/dto/auth/login.request.dto';
 import { RegisterRequestDto } from 'src/dto/auth/register.request.dto';
 import { BasicResponseDto } from 'src/dto/common/basic.response.dto';
@@ -27,6 +28,7 @@ export class AuthController {
     });
   }
 
+  // BUG: 이미 로그인 상태인 경우에도 로그인 성공 응답 반환함
   @Post('login')
   async login(
     @Body() dto: LoginRequestDto,
@@ -50,16 +52,18 @@ export class AuthController {
     });
   }
 
+  // BUG: session 쿠키가 없을 경우에도 성공 응답 반환함
   @Post('logout')
-  async logout(@Res({ passthrough: true }) res: Response) {
-    const sessionId = res.cookie['session_id'];
-    if (!sessionId)
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const sessionId = req.cookies.session_id;
+    if (!sessionId) {
       throw new BadRequestException(
         new ErrorResponseDto(
           ExceptionCode.SESSION_NOT_FOUND,
-          'Session not found',
+          `Session not found with ${sessionId}`,
         ),
       );
+    }
 
     await this.authService.logout(sessionId);
     res.clearCookie('session_id');

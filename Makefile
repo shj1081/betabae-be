@@ -39,7 +39,7 @@ clean:
 	docker-compose -f infra-dev/docker-compose.yaml down -v
 	rm -rf $(BACKEND_PATH)/dist
 	rm -rf $(BACKEND_PATH)/node_modules
-	rm -rf $(BACKEND_PATH)/prisma/migrations
+	rm -rf $(BACKEND_PATH)/src/infra/prisma/migrations
 
 # local one shot run
 fast-setup:
