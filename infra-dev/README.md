@@ -4,6 +4,7 @@
 
 - Redis (port: 6379)
 - MySQL (port: 3306)
+- MinIO (port: 9000, 9001)
 
 ## Quick Start
 
@@ -41,3 +42,15 @@ docker exec -it mysql mysql -u root -p
 
 # Password: 1234
 ```
+
+## MinIO Test
+
+```bash
+# web ui for minio
+http://localhost:9001
+
+# id: minioadmin
+# pw: minioadmin
+```
+
+- check for betabae bucket

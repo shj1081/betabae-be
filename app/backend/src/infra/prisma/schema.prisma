@@ -23,7 +23,7 @@ model User {
 
 model UserProfile {
   profile_id       Int    @id @default(autoincrement())
-  display_name     String?
+  name             String
   bio              String?
   profile_media_id Int?
   user_id          Int    @unique

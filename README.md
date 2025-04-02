@@ -4,70 +4,61 @@
 
 ```
 betabae/
-├── Makefile                        # Root-level: CLI helper commands
-├── README.md                       # Project documentation
-├── .gitignore
+├── .github/                        # GitHub configuration files
+│   ├── ISSUE_TEMPLATE
+│   └── pull_request_template.md
+│
+├── app/
+│   └── backend/                    # NestJS backend app
+│       ├── dist/                   # Compiled output
+│       ├── node_modules/           # Dependencies
+│       ├── src/
+│       │   ├── dto/                # Data Transfer Objects
+│       │   │   ├── auth/
+│       │   │   └── common/
+│       │   │
+│       │   ├── enums/              # Enumeration definitions
+│       │   │
+│       │   ├── infra/              # Infrastructure services
+│       │   │   ├── prisma/         # Prisma ORM configuration
+│       │   │   ├── redis/          # Redis configuration
+│       │   │   └── s3/             # S3/MinIO configuration
+│       │   │
+│       │   ├── middleware/         # Application middleware
+│       │   │   └── logging.middleware.ts
+│       │   │
+│       │   ├── modules/            # Feature modules
+│       │   │   └── auth/           # Authentication module
+│       │   │
+│       │   ├── app.module.ts       # Main application module
+│       │   └── main.ts             # Application entry point
+│       │
+│       ├── test/                   # End-to-end tests
+│       ├── .env                    # Environment variables
+│       ├── .prettierrc             # Prettier configuration
+│       ├── eslint.config.mjs       # ESLint configuration
+│       ├── nest-cli.json           # NestJS CLI configuration
+│       ├── package.json            # Project dependencies and scripts
+│       ├── README.md               # Backend-specific documentation
+│       ├── tsconfig.build.json     # TypeScript build configuration
+│       ├── tsconfig.json           # TypeScript configuration
+│       └── yarn.lock               # Yarn lock file
 │
 ├── infra-dev/                      # Local development infrastructure
-│   ├── docker-compose.yaml
-│   ├── redis.conf
-│   └── README.md
+│   ├── docker-compose.yaml         # Docker Compose configuration
+│   ├── redis.conf                  # Redis configuration
+│   └── README.md                   # Infrastructure documentation
 │
-└── app/
-    └── backend/                    # NestJS backend app
-        ├── .env
-        ├── .prettierrc
-        ├── eslint.config.mjs
-        ├── nest-cli.json
-        ├── package.json
-        ├── tsconfig.json
-        ├── tsconfig.build.json
-        ├── yarn.lock
-        ├── README.md               # Backend-specific README
-        │
-        ├── test/
-        │   ├── app.e2e-spec.ts
-        │   └── jest-e2e.json
-        │
-        ├── src/
-        │   ├── main.ts
-        │   ├── app.module.ts
-        │
-        │   ├── modules/
-        │   │   └── auth/
-        │   │       ├── auth.controller.ts
-        │   │       ├── auth.service.ts
-        │   │       └── auth.module.ts
-        │
-        │   ├── infra/
-        │   │   ├── prisma/
-        │   │   │   ├── schema.prisma
-        │   │   │   ├── migrations/
-        │   │   │   ├── prisma.module.ts
-        │   │   │   └── prisma.service.ts
-        │   │   └── redis/
-        │   │       ├── redis.module.ts
-        │   │       └── redis.service.ts
-        │
-        │   ├── dto/
-        │   │   ├── auth/
-        │   │   │   ├── login.request.dto.ts
-        │   │   │   └── register.request.dto.ts
-        │   │   └── common/
-        │   │       ├── basic.response.dto.ts
-        │   │       └── error.response.dto.ts
-        │
-        │   ├── enums/
-        │   │   └── custom.exception.code.ts
-        │
-        │   └── (optional: common/, interceptors/, guards/, etc.)
+├── Makefile                        # Root-level Makefile for convenience commands
+├── .gitignore                      # Root Git ignore file
+└── README.md                       # Project documentation
 ```
 
 ## Tech Stacks
 
 - Backend: NestJS (TypeScript)
 - Database: MySQL (Prisma ORM)
-- Infrastructure: Redis, Docker, Docker Compose
+- Infrastructure: Redis, S3/MinIO, Docker, Docker Compose
 
 ## Prerequisites
 
@@ -84,7 +75,7 @@ git clone https://github.com/shj1081/betabae-be
 cd betabae
 ```
 
-2. Start Docker containers for mysql and redis
+2. Start Docker containers for MySQL, Redis and MinIO
 
 ```bash
 make up
@@ -132,4 +123,4 @@ make dev
 ### Utility Commands
 
 - `make clean`: Clean up project (remove Docker volumes, build files, node_modules)
-- `fast-setup`: Setup local Environment in oneshot cmd
+- `fast-setup`: Setup local environment in oneshot command (for first run)
