@@ -1,4 +1,3 @@
-// src/auth/auth.controller.ts
 import {
   BadRequestException,
   Body,
@@ -15,7 +14,6 @@ import { ErrorResponseDto } from 'src/dto/common/error.response.dto';
 import { ExceptionCode } from 'src/enums/custom.exception.code';
 import { AuthService } from './auth.service';
 
-// TODO: refine response
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
@@ -28,22 +26,24 @@ export class AuthController {
     });
   }
 
-  // BUG: 이미 로그인 상태인 경우에도 로그인 성공 응답 반환함
   @Post('login')
   async login(
     @Body() dto: LoginRequestDto,
+    @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
+    const currentSessionId = req.cookies.session_id;
+
     const { sessionId } = await this.authService.login(
       dto.username,
       dto.password,
+      currentSessionId,
     );
 
     res.cookie('session_id', sessionId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production', // only in production
       sameSite: 'lax',
-      maxAge: 1000 * 60 * 60 * 24, // 24h
       path: '/',
     });
 
@@ -52,7 +52,6 @@ export class AuthController {
     });
   }
 
-  // BUG: session 쿠키가 없을 경우에도 성공 응답 반환함
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const sessionId = req.cookies.session_id;
