@@ -19,9 +19,21 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(@Body() dto: RegisterRequestDto) {
-    await this.authService.register(dto);
-    return new BasicResponseDto('Register successful', {
+  async register(
+    @Body() dto: RegisterRequestDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { sessionId } = await this.authService.registerAndLogin(dto);
+
+    // auto login after register
+    res.cookie('session_id', sessionId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // only in production
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return new BasicResponseDto('Register successful and logged in', {
       username: dto.username,
     });
   }
@@ -32,12 +44,21 @@ export class AuthController {
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,
   ) {
+    // session의 경우 ttl이 infinite이라고 가정
+    // check if user is already logged in
     const currentSessionId = req.cookies.session_id;
+    if (currentSessionId) {
+      throw new BadRequestException(
+        new ErrorResponseDto(
+          ExceptionCode.ALREADY_LOGGED_IN,
+          `User session ${currentSessionId} already exists`,
+        ),
+      );
+    }
 
     const { sessionId } = await this.authService.login(
       dto.username,
       dto.password,
-      currentSessionId,
     );
 
     res.cookie('session_id', sessionId, {
