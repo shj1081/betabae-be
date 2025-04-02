@@ -1,4 +1,3 @@
-// src/auth/auth.service.ts
 import {
   BadRequestException,
   Injectable,
@@ -48,7 +47,23 @@ export class AuthService {
   async login(
     username: string,
     password: string,
+    currentSessionId?: string,
   ): Promise<{ sessionId: string }> {
+    // Check if user is already logged in
+    if (currentSessionId) {
+      const existingSession = await this.redis.get(
+        `session:${currentSessionId}`,
+      );
+      if (existingSession) {
+        throw new BadRequestException(
+          new ErrorResponseDto(
+            ExceptionCode.ALREADY_LOGGED_IN,
+            'User is already logged in',
+          ),
+        );
+      }
+    }
+
     // find user by username from User table
     const user = await this.prisma.user.findUnique({
       where: { username },
@@ -75,20 +90,30 @@ export class AuthService {
     // generate sessionId
     const sessionId = uuidv4();
     const sessionKey = `session:${sessionId}`;
-    const ttl = 60 * 60 * 24; // 24h
 
-    // save sessionId and user_id to redis
+    // save sessionId and user_id to redis without TTL
     await this.redis.set(
       sessionKey,
       JSON.stringify({ user_id: user.user_id, username: user.username }),
-      ttl,
     );
 
     return { sessionId };
   }
 
-  async logout(sessionId: string) {
+  async logout(sessionId: string): Promise<void> {
     const sessionKey = `session:${sessionId}`;
+
+    // Check if session exists
+    const session = await this.redis.get(sessionKey);
+    if (!session) {
+      throw new BadRequestException(
+        new ErrorResponseDto(
+          ExceptionCode.SESSION_NOT_FOUND,
+          `Session not found with ${sessionId}`,
+        ),
+      );
+    }
+
     await this.redis.del(sessionKey);
   }
 }
