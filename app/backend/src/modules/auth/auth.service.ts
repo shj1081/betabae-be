@@ -55,10 +55,11 @@ export class AuthService {
         `session:${currentSessionId}`,
       );
       if (existingSession) {
+        const sessionData = JSON.parse(existingSession);
         throw new BadRequestException(
           new ErrorResponseDto(
             ExceptionCode.ALREADY_LOGGED_IN,
-            'User is already logged in',
+            `User ${sessionData.username} is already logged in with session ${currentSessionId}`,
           ),
         );
       }
@@ -103,17 +104,18 @@ export class AuthService {
   async logout(sessionId: string): Promise<void> {
     const sessionKey = `session:${sessionId}`;
 
-    // Check if session exists
+    // Check if session exists before logout
     const session = await this.redis.get(sessionKey);
     if (!session) {
       throw new BadRequestException(
         new ErrorResponseDto(
           ExceptionCode.SESSION_NOT_FOUND,
-          `Session not found with ${sessionId}`,
+          'Already logged out or invalid session',
         ),
       );
     }
 
+    // Session exists, proceed with logout
     await this.redis.del(sessionKey);
   }
 }
