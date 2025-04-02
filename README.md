@@ -80,11 +80,11 @@ betabae/
 1. Clone
 
 ```bash
-git clone [repository-url]
+git clone https://github.com/shj1081/betabae-be
 cd betabae
 ```
 
-2. Start Docker containers
+2. Start Docker containers for mysql and redis
 
 ```bash
 make up
