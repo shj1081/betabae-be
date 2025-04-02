@@ -7,86 +7,178 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---- 사용자 및 프로필 ----
 model User {
-  user_id        Int      @id @default(autoincrement())
-  username       String   @unique
-  email          String   @unique
-  password_hash  String
-  profile        UserProfile?
-  surveyResponse UserSurveyResponse?
-  messages       Message[]
-  matchesAsUser1 Match[]  @relation("User1")
-  matchesAsUser2 Match[]  @relation("User2")
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id                  Int                 @id @default(autoincrement())
+  username            String              @unique
+  password_hash       String
+  name                String
+  created_at          DateTime            @default(now())
+  updated_at          DateTime            @updatedAt
+
+  profile             UserProfile?
+  surveyResponse      UserSurveyResponse?
+  personality         UserPersonality?
+  messages            Message[]
+  matchParticipations MatchParticipant[]  // 참가한 모든 매칭
+  initiatedMatches    Match[]             @relation("Initiator")  // TODO: 시작한 매칭인데 필요한지 확인
 }
 
 model UserProfile {
-  profile_id       Int    @id @default(autoincrement())
-  name             String
-  bio              String?
+  profile_id      Int       @id @default(autoincrement())
+  user_id         Int       @unique // foreign key
+  email           String    @unique
+  introduce       String?
+  age             Int
+  gender          Gender
+  mbti            MBTI?
+  interests       Json      @default("[]")
+  province        String
+  city            String
   profile_media_id Int?
-  user_id          Int    @unique
-  user             User   @relation(fields: [user_id], references: [user_id])
-  media            Media? @relation(fields: [profile_media_id], references: [media_id])
-  created_at       DateTime @default(now())
-  updated_at       DateTime @updatedAt
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  profile_image   Media?    @relation(fields: [profile_media_id], references: [media_id])
+  user            User      @relation(fields: [user_id], references: [id])
 }
 
+
+// ---- 성격 데이터 ----
+model UserPersonality {
+  personality_id  Int       @id @default(autoincrement())
+  user_id         Int       @unique // foreign key
+  openness        Float
+  conscientiousness Float
+  extraversion    Float
+  agreeableness   Float
+  neuroticism     Float
+  last_calculated DateTime
+
+  user            User      @relation(fields: [user_id], references: [id])
+}
+
+// ---- 설문 응답 ----
 model UserSurveyResponse {
-  survey_id    Int    @id @default(autoincrement())
-  user_id      Int    @unique
+  survey_id    Int     @id @default(autoincrement())
+  user_id      Int     @unique
   survey_data  Json
-  user         User   @relation(fields: [user_id], references: [user_id])
   created_at   DateTime @default(now())
   updated_at   DateTime @updatedAt
+
+  user         User    @relation(fields: [user_id], references: [id])
 }
 
+// ---- 매칭 시스템 ----
 model Match {
-  match_id     Int    @id @default(autoincrement())
-  user1_id     Int
-  user2_id     Int
-  user1        User   @relation("User1", fields: [user1_id], references: [user_id])
-  user2        User   @relation("User2", fields: [user2_id], references: [user_id])
-  user1_consent Boolean @default(false)
-  user2_consent Boolean @default(false)
-  status        String  @default("pending")
+  match_id      Int               @id @default(autoincrement())
+  initiator_id  Int               // TODO: 매칭을 시작한 사용자 ID인데 필요한지 확인
+  status        MatchStatus       @default(PENDING)
+  created_at    DateTime          @default(now())
+  updated_at    DateTime          @updatedAt
+
+  initiator     User              @relation("Initiator", fields: [initiator_id], references: [id])
   conversations Conversation[]
+  participants  MatchParticipant[]
+}
+
+model MatchParticipant {
+  id         Int      @id @default(autoincrement())
+  match_id   Int
+  user_id    Int
+  consent    Boolean  @default(false)  // TODO: 사용자 동의 여부인데 match status와 같은 의미인지 확인
+  joined_at  DateTime @default(now())
+  
+  match      Match    @relation(fields: [match_id], references: [match_id])
+  user       User     @relation(fields: [user_id], references: [id])
+  
+  @@unique([match_id, user_id])  // 한 매치에 한 사용자는 한 번만 참가 가능
+}
+
+// ---- 채팅 시스템 ----
+model Conversation {
+  conversation_id Int       @id @default(autoincrement())
+  match_id        Int
+  type            ConversationType    @default(BETA_BAE)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  match           Match     @relation(fields: [match_id], references: [match_id])
+  messages        Message[]
+}
+
+// TODO: 사진 메시지와 일반 메시지를 구분할 것인지 확인 (like instagram dm) -> api 구현 편해질지도
+model Message {
+  message_id          Int         @id @default(autoincrement())
+  conversation_id     Int
+  sender_id           Int
+  message_text        String      @db.Text
+  sent_at             DateTime    @default(now())
+  is_read             Boolean     @default(false)
+  read_at             DateTime?   // TODO: 읽은 시간인데 필요한지 확인
+  attachment_media_id Int?
+
+  conversation        Conversation @relation(fields: [conversation_id], references: [conversation_id])
+  sender              User        @relation(fields: [sender_id], references: [id])
+  media               Media?      @relation(fields: [attachment_media_id], references: [media_id]) // TODO: 다중 미디어 지원 시 수정 필요
+  
+  @@index([conversation_id, sent_at])  // 대화 내에서 시간순 조회를 위한 인덱스
+}
+
+// ---- 미디어 관리 ----
+model Media {
+  media_id     Int            @id @default(autoincrement())
+  file_url     String
+  file_type    String
+  context      String?
+  created_at   DateTime       @default(now())
+  updated_at   DateTime       @updatedAt
+
+  messages     Message[]
+  userProfiles UserProfile[]
+}
+
+// ---- BetaBae 프롬프트 관리 ----
+model BetaBaePrompt {
+  prompt_id     Int      @id @default(autoincrement())
+  template      String   @db.Text
+  is_active     Boolean  @default(true)
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 }
 
-model Conversation {
-  conversation_id Int      @id @default(autoincrement())
-  match_id        Int
-  match           Match    @relation(fields: [match_id], references: [match_id])
-  type            String   @default("betaBae")
-  messages        Message[]
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+// ---- enum 정의 ----
+enum Gender {
+  MALE
+  FEMALE
 }
 
-model Message {
-  message_id          Int      @id @default(autoincrement())
-  conversation_id     Int
-  sender_id           Int
-  message_text        String
-  analysis            Json?
-  sent_at             DateTime @default(now())
-  is_read             Boolean  @default(false)
-  attachment_media_id Int?
-  conversation        Conversation @relation(fields: [conversation_id], references: [conversation_id])
-  sender              User         @relation(fields: [sender_id], references: [user_id])
-  media               Media?       @relation(fields: [attachment_media_id], references: [media_id])
+enum MBTI {
+  INFP
+  INFJ
+  INTP
+  INTJ
+  ISFP
+  ISFJ
+  ISTP
+  ISTJ
+  ENFP
+  ENFJ
+  ENTP
+  ENTJ
+  ESFP
+  ESFJ
+  ESTP
+  ESTJ
 }
 
-model Media {
-  media_id    Int    @id @default(autoincrement())
-  file_url    String
-  file_type   String
-  context     String?
-  messages    Message[]
-  userProfiles UserProfile[]
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum ConversationType {
+  BETA_BAE
+  REAL_BAE
 }

@@ -3,6 +3,7 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { Gender } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { RegisterRequestDto } from 'src/dto/auth/register.request.dto';
 import { ErrorResponseDto } from 'src/dto/common/error.response.dto';
@@ -18,7 +19,7 @@ export class AuthService {
     private redis: RedisService,
   ) {}
 
-  async register(dto: RegisterRequestDto) {
+  async registerAndLogin(dto: RegisterRequestDto) {
     // check if user already exists
     const user = await this.prisma.user.findUnique({
       where: { username: dto.username },
@@ -35,36 +36,47 @@ export class AuthService {
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
     // create user
-    return this.prisma.user.create({
+    const createdUser = await this.prisma.user.create({
       data: {
         username: dto.username,
-        email: dto.email,
         password_hash: hashedPassword,
+        name: dto.name,
       },
     });
+
+    // create user profile
+    await this.prisma.userProfile.create({
+      data: {
+        user_id: createdUser.id,
+        email: dto.email,
+        age: dto.age,
+        gender: dto.gender as Gender,
+        province: dto.province,
+        city: dto.city,
+        interests: dto.interests ? dto.interests : JSON.stringify([]), // TODO: 타입 정의 필요? 필수 항목?
+      },
+    });
+
+    // create user personality
+    await this.prisma.userPersonality.create({
+      data: {
+        user_id: createdUser.id,
+        openness: dto.personality.openness,
+        conscientiousness: dto.personality.conscientiousness,
+        extraversion: dto.personality.extraversion,
+        agreeableness: dto.personality.agreeableness,
+        neuroticism: dto.personality.neuroticism,
+        last_calculated: new Date(),
+      },
+    });
+
+    return this.login(dto.username, dto.password);
   }
 
   async login(
     username: string,
     password: string,
-    currentSessionId?: string,
   ): Promise<{ sessionId: string }> {
-    // Check if user is already logged in
-    if (currentSessionId) {
-      const existingSession = await this.redis.get(
-        `session:${currentSessionId}`,
-      );
-      if (existingSession) {
-        const sessionData = JSON.parse(existingSession);
-        throw new BadRequestException(
-          new ErrorResponseDto(
-            ExceptionCode.ALREADY_LOGGED_IN,
-            `User ${sessionData.username} is already logged in with session ${currentSessionId}`,
-          ),
-        );
-      }
-    }
-
     // find user by username from User table
     const user = await this.prisma.user.findUnique({
       where: { username },
@@ -95,7 +107,7 @@ export class AuthService {
     // save sessionId and user_id to redis without TTL
     await this.redis.set(
       sessionKey,
-      JSON.stringify({ user_id: user.user_id, username: user.username }),
+      JSON.stringify({ id: user.id, username: user.username }),
     );
 
     return { sessionId };
