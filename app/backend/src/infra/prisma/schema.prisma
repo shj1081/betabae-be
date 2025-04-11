@@ -10,7 +10,7 @@ datasource db {
 // ---- 사용자 및 프로필 ----
 model User {
   id            Int      @id @default(autoincrement())
-  username      String   @unique
+  email         String   @unique
   password_hash String
   name          String
   created_at    DateTime @default(now())
@@ -27,12 +27,11 @@ model User {
 model UserProfile {
   profile_id       Int      @id @default(autoincrement())
   user_id          Int      @unique // foreign key
-  email            String   @unique
   introduce        String?
   age              Int
   gender           Gender
   mbti             MBTI?
-  interests        Json     @default("[]")
+  interests        String   @default("") // comma-separated interests
   province         String
   city             String
   profile_media_id Int?
