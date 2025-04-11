@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { plainToInstance } from 'class-transformer';
 import { ErrorResponseDto } from 'src/dto/common/error.response.dto';
@@ -15,30 +20,67 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   async getUserProfile(userId: number) {
+    // select를 이용하여 불필요 필드 차단 -> 쿼리 부담 줄임
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      include: {
-        profile: true,
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        profile: {
+          select: {
+            introduce: true,
+            age: true,
+            gender: true,
+            mbti: true,
+            interests: true,
+            province: true,
+            city: true,
+            profile_image: {
+              select: {
+                file_url: true,
+              },
+            },
+          },
+        },
       },
     });
 
     if (!user) {
-      throw new NotFoundException(
-        new ErrorResponseDto(ExceptionCode.USER_NOT_FOUND, `User with ID ${userId} not found`),
+      throw new BadRequestException(
+        new ErrorResponseDto(
+          ExceptionCode.USER_NOT_FOUND,
+          `User with ID ${userId} not found`,
+        ),
       );
     }
 
+    // TODO: 이거로 회원 가입만 하고 기본 정보 안넣은거 확인 가능?
     if (!user.profile) {
       throw new NotFoundException(
-        new ErrorResponseDto(ExceptionCode.USER_PROFILE_NOT_FOUND, `Profile for user with ID ${userId} not found`),
+        new ErrorResponseDto(
+          ExceptionCode.USER_PROFILE_NOT_FOUND,
+          `Profile for user with ID ${userId} not found`,
+        ),
       );
     }
 
-    // Transform raw data to DTO using plainToInstance
-    return plainToInstance(UserProfileResponseDto, 
-      { user, profile: user.profile },
-      { excludeExtraneousValues: true }
-    );
+    // profile_image_url 필드를 직접 매핑
+    const profileData = {
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+      },
+      profile: {
+        ...user.profile,
+        profile_image_url: user.profile.profile_image?.file_url, // media_id 대신 file_url만 가져옴
+      },
+    };
+
+    return plainToInstance(UserProfileResponseDto, profileData, {
+      excludeExtraneousValues: true,
+    });
   }
 
   async updateOrCreateUserProfile(userId: number, dto: UserProfileDto) {
@@ -49,7 +91,10 @@ export class UserService {
 
     if (!user) {
       throw new NotFoundException(
-        new ErrorResponseDto(ExceptionCode.USER_NOT_FOUND, `User with ID ${userId} not found`),
+        new ErrorResponseDto(
+          ExceptionCode.USER_NOT_FOUND,
+          `User with ID ${userId} not found`,
+        ),
       );
     }
 
@@ -68,9 +113,9 @@ export class UserService {
 
     // 프로필 생성 또는 업데이트
     if (existingProfile) {
-      // interests 처리 
+      // interests 처리
       const interests = dto.interests ? dto.interests.join(',') : undefined;
-      
+
       // 업데이트용 프로필 데이터 객체 구성 - null/undefined가 아닌 필드만 포함
       const profileData = Object.entries({
         introduce: dto.introduce,
@@ -79,12 +124,12 @@ export class UserService {
         mbti: dto.mbti,
         interests,
         province: dto.province,
-        city: dto.city
+        city: dto.city,
       }).reduce((acc, [key, value]) => {
         if (value !== undefined) acc[key] = value;
         return acc;
       }, {});
-      
+
       // 업데이트할 내용이 있는 경우만 업데이트
       if (Object.keys(profileData).length > 0) {
         await this.prisma.userProfile.update({
@@ -94,15 +139,20 @@ export class UserService {
       }
     } else {
       // 프로필 생성 시 필수 정보 검증
-      if (dto.age === undefined || dto.gender === undefined || dto.province === undefined || dto.city === undefined) {
+      if (
+        dto.age === undefined ||
+        dto.gender === undefined ||
+        dto.province === undefined ||
+        dto.city === undefined
+      ) {
         throw new BadRequestException(
           new ErrorResponseDto(
-            ExceptionCode.NOT_ENOUGH_PROFILE_INFO, 
-            '프로필 생성을 위해 age, gender, province, city 정보가 모두 필요합니다.'
+            ExceptionCode.NOT_ENOUGH_PROFILE_INFO,
+            '프로필 생성을 위해 age, gender, province, city 정보가 모두 필요합니다.',
           ),
         );
-      } 
-      
+      }
+
       // 새 프로필 생성을 위한 타입 안전한 데이터 객체 생성
       const createProfileData = {
         user_id: userId,
@@ -111,15 +161,15 @@ export class UserService {
         gender: dto.gender!,
         province: dto.province!,
         city: dto.city!,
-        
+
         // 선택적 필드
         introduce: dto.introduce,
         mbti: dto.mbti,
         interests: dto.interests ? dto.interests.join(',') : '',
       };
-      
+
       await this.prisma.userProfile.create({
-        data: createProfileData
+        data: createProfileData,
       });
     }
 
@@ -155,7 +205,10 @@ export class UserService {
 
     if (!user) {
       throw new NotFoundException(
-        new ErrorResponseDto(ExceptionCode.USER_NOT_FOUND, `User with ID ${userId} not found`),
+        new ErrorResponseDto(
+          ExceptionCode.USER_NOT_FOUND,
+          `User with ID ${userId} not found`,
+        ),
       );
     }
 
@@ -199,20 +252,29 @@ export class UserService {
       where: { id: userId },
       select: {
         password_hash: true,
-      }
+      },
     });
 
     if (!user) {
       throw new NotFoundException(
-        new ErrorResponseDto(ExceptionCode.USER_NOT_FOUND, `User with ID ${userId} not found`),
+        new ErrorResponseDto(
+          ExceptionCode.USER_NOT_FOUND,
+          `User with ID ${userId} not found`,
+        ),
       );
     }
 
     // Verify the current password
-    const isPasswordValid = await bcrypt.compare(dto.currentPassword, user.password_hash);
+    const isPasswordValid = await bcrypt.compare(
+      dto.currentPassword,
+      user.password_hash,
+    );
     if (!isPasswordValid) {
       throw new UnauthorizedException(
-        new ErrorResponseDto(ExceptionCode.INVALID_CREDENTIALS, 'Current password is incorrect'),
+        new ErrorResponseDto(
+          ExceptionCode.INVALID_CREDENTIALS,
+          'Current password is incorrect',
+        ),
       );
     }
 
@@ -222,7 +284,7 @@ export class UserService {
     // Update the password_hash field
     await this.prisma.user.update({
       where: { id: userId },
-      data: { 
+      data: {
         password_hash: hashedPassword,
         updated_at: new Date(),
       },

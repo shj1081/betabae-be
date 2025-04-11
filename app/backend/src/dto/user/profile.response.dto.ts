@@ -24,9 +24,6 @@ export class UserDto {
 
 export class ProfileDto {
   @Expose()
-  profile_id: number;
-
-  @Expose()
   introduce?: string;
 
   @Expose()
@@ -39,8 +36,8 @@ export class ProfileDto {
   mbti?: MBTI;
 
   @Expose()
-  @Transform(({ value }) => 
-    typeof value === 'string' && value !== '' ? value.split(',') : []
+  @Transform(({ value }) =>
+    typeof value === 'string' && value !== '' ? value.split(',') : [],
   )
   interests: string[];
 
@@ -51,7 +48,7 @@ export class ProfileDto {
   city: string;
 
   @Expose()
-  profile_media_id?: number;
+  profile_image_url?: string;
 
   // Omitting timestamps to reduce redundancy
   // created_at and updated_at are already in the parent user object
