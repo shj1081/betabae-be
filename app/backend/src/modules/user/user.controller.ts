@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Put,
-  Req,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
 import { Request } from 'express';
 import { BasicResponseDto } from 'src/dto/common/basic.response.dto';
 import { UpdateCredentialDto } from 'src/dto/user/credential.request.dto';
@@ -17,9 +9,7 @@ import { UserService } from './user.service';
 
 @Controller('user')
 export class UserController {
-  constructor(
-    private readonly userService: UserService,
-  ) {}
+  constructor(private readonly userService: UserService) {}
 
   @UseGuards(AuthGuard)
   @Get('profile')
@@ -27,16 +17,28 @@ export class UserController {
     const userId = Number(req['user'].id);
     const userData = await this.userService.getUserProfile(userId);
 
-    return new BasicResponseDto('User profile retrieved successfully', userData);
+    return new BasicResponseDto(
+      'User profile retrieved successfully',
+      userData,
+    );
   }
 
   @UseGuards(AuthGuard)
   @Put('profile')
-  async updateOrCreateUserProfile(@Req() req: Request, @Body() dto: UserProfileDto) {
+  async updateOrCreateUserProfile(
+    @Req() req: Request,
+    @Body() dto: UserProfileDto,
+  ) {
     const userId = Number(req['user'].id);
-    const updatedUser = await this.userService.updateOrCreateUserProfile(userId, dto);
+    const updatedUser = await this.userService.updateOrCreateUserProfile(
+      userId,
+      dto,
+    );
 
-    return new BasicResponseDto('User profile updated successfully', updatedUser);
+    return new BasicResponseDto(
+      'User profile updated successfully',
+      updatedUser,
+    );
   }
 
   @UseGuards(AuthGuard)
@@ -45,21 +47,34 @@ export class UserController {
     const userId = Number(req['user'].id);
     const personalityData = await this.userService.getUserPersonality(userId);
 
-    return new BasicResponseDto('User personality retrieved successfully', personalityData);
+    return new BasicResponseDto(
+      'User personality retrieved successfully',
+      personalityData,
+    );
   }
 
   @UseGuards(AuthGuard)
-  @Post('personality')
-  async updateOrCreateUserPersonality(@Req() req: Request, @Body() dto: UserPersonalityDto) {
+  @Put('personality')
+  async updateOrCreateUserPersonality(
+    @Req() req: Request,
+    @Body() dto: UserPersonalityDto,
+  ) {
     const userId = Number(req['user'].id);
-    const updatedPersonality = await this.userService.updateOrCreateUserPersonality(userId, dto);
+    const updatedPersonality =
+      await this.userService.updateOrCreateUserPersonality(userId, dto);
 
-    return new BasicResponseDto('User personality updated successfully', updatedPersonality);
+    return new BasicResponseDto(
+      'User personality updated successfully',
+      updatedPersonality,
+    );
   }
 
   @UseGuards(AuthGuard)
   @Put('credential')
-  async updateUserCredential(@Req() req: Request, @Body() dto: UpdateCredentialDto) {
+  async updateUserCredential(
+    @Req() req: Request,
+    @Body() dto: UpdateCredentialDto,
+  ) {
     const userId = Number(req['user'].id);
     const result = await this.userService.updateUserCredential(userId, dto);
 
