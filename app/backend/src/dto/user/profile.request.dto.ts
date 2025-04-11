@@ -1,5 +1,11 @@
 import { Gender, MBTI } from '@prisma/client';
-import { IsArray, IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class UserProfileDto {
   @IsString()
