@@ -1,9 +1,4 @@
-import {
-  HttpException,
-  HttpStatus,
-  Injectable,
-  OnModuleInit,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable, OnModuleInit } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { ErrorResponseDto } from 'src/dto/common/error.response.dto';
 import { ExceptionCode } from 'src/enums/custom.exception.code';
@@ -36,7 +31,7 @@ export class RedisService implements OnModuleInit {
     } catch (error) {
       console.error(
         '[RedisService] Redis initial connection failed:',
-        error.message,
+        error instanceof Error ? error.message : String(error),
       );
     }
   }
@@ -55,12 +50,8 @@ export class RedisService implements OnModuleInit {
   }
 
   // handle redis error
-  private handleRedisError(
-    error: Error,
-    operation: string,
-    key: string,
-  ): never {
-    const message = error.message || '';
+  private handleRedisError(error: unknown, operation: string, key: string): never {
+    const message = error instanceof Error ? error.message : String(error);
     if (message.includes('ECONNREFUSED')) {
       throw new HttpException(
         new ErrorResponseDto(
@@ -73,10 +64,7 @@ export class RedisService implements OnModuleInit {
 
     if (message.includes('NOAUTH')) {
       throw new HttpException(
-        new ErrorResponseDto(
-          ExceptionCode.REDIS_AUTH_ERROR,
-          'Redis authentication failed',
-        ),
+        new ErrorResponseDto(ExceptionCode.REDIS_AUTH_ERROR, 'Redis authentication failed'),
         HttpStatus.UNAUTHORIZED,
       );
     }
@@ -99,7 +87,7 @@ export class RedisService implements OnModuleInit {
       } else {
         await this.redis.set(key, value);
       }
-    } catch (error) {
+    } catch (error: unknown) {
       this.handleRedisError(error, 'set', key);
     }
   }
@@ -109,7 +97,7 @@ export class RedisService implements OnModuleInit {
     this.checkConnection();
     try {
       return await this.redis.get(key);
-    } catch (error) {
+    } catch (error: unknown) {
       this.handleRedisError(error, 'get', key);
     }
   }
@@ -119,7 +107,7 @@ export class RedisService implements OnModuleInit {
     this.checkConnection();
     try {
       await this.redis.del(key);
-    } catch (error) {
+    } catch (error: unknown) {
       this.handleRedisError(error, 'delete', key);
     }
   }
