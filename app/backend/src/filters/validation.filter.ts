@@ -16,6 +16,15 @@ export class ValidationFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const exceptionResponse = exception.getResponse();
 
+    // 사용자 정의 ErrorResponseDto를 포함한 BadRequestException인 경우 그대로 반환
+    if (
+      typeof exceptionResponse === 'object' &&
+      'code' in exceptionResponse &&
+      'message' in exceptionResponse
+    ) {
+      return response.status(HttpStatus.BAD_REQUEST).json(exceptionResponse);
+    }
+
     let errors: Record<string, string[]> = {};
     let errorMessage = 'Validation failed';
 
