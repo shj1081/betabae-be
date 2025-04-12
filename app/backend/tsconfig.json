@@ -17,5 +17,9 @@
     "noImplicitAny": false,
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "include": [
+    "src/**/*",
+    "src/modules/chat/chat.typings.d.ts"
+  ]
 }
