@@ -18,8 +18,10 @@ src/
 ├── main.ts                    # Application entry point
 ├── dto/                       # Data Transfer Objects
 │   ├── auth/                  # Authentication-related DTOs
+│   ├── chat/                  # Chat-related DTOs
 │   ├── common/                # Shared DTOs
 │   ├── file/                  # File-related DTOs
+│   ├── match/                 # Match-related DTOs
 │   └── user/                  # User-related DTOs
 ├── enums/                     # Enum definitions
 ├── filters/                   # Exception filters
@@ -30,8 +32,10 @@ src/
 ├── middleware/                # Application middleware
 └── modules/                   # Feature modules
     ├── auth/                  # Authentication module
-    ├── file/                  # File handling module
-    └── user/                  # User management module
+    ├── chat/                  # Chat module
+    ├── file/                  # File module
+    ├── match/                 # Match module
+    └── user/                  # User module
 ```
 
 ## Prerequisites
