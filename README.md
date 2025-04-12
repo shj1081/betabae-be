@@ -17,12 +17,12 @@ betabae/
 │       ├── src/              # Source code
 │       │   ├── dto/          # Data Transfer Objects
 │       │   ├── enums/        # Enumeration definitions
-│       │   ├── infra/        # Infrastructure services (Prisma, Redis, S3)
+│       │   ├── filters/      # Exception filters
+│       │   ├── infra/        # Infrastructure services
 │       │   ├── middleware/   # Application middleware
-│       │   ├── modules/      # Feature modules (Auth, etc.)
+│       │   ├── modules/      # Feature modules
 │       │   ├── app.module.ts # Main application module
 │       │   └── main.ts       # Application entry point
-│       │
 │       └── test/             # End-to-end tests
 │
 ├── infra-dev/                # Local development infrastructure
