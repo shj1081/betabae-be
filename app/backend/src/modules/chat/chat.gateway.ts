@@ -9,6 +9,7 @@ import {
   WebSocketServer,
 } from '@nestjs/websockets';
 import { ConversationType } from '@prisma/client';
+import { parse } from 'cookie';
 import { Server, Socket } from 'socket.io';
 import { RedisService } from 'src/infra/redis/redis.service';
 import { ChatService } from './chat.service';
@@ -42,7 +43,9 @@ export class ChatGateway
   async handleConnection(client: AuthenticatedSocket) {
     try {
       // 클라이언트에서 전달한 session_id 조회
-      const sessionId = client.request.cookies?.session_id;
+      const sessionId = parse(client.request.headers.cookie || '').session_id;
+      // client.request 구조체 출력
+      
       if (!sessionId) {
         console.log('No session_id in cookies; disconnecting');
         client.disconnect();
