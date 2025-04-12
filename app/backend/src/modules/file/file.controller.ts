@@ -15,7 +15,7 @@ import { UploadFileResponseDto } from '../../dto/file/upload-file.response.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { FileService } from './file.service';
 
-@Controller('files')
+@Controller('file')
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
