@@ -304,9 +304,6 @@ import { FileService } from 'src/modules/file/file.service';
       return this.mapMessageToDto(message);
     }
   
-    /**
-     * 읽음 처리
-     */
     async markMessagesAsRead(userId: number, conversationId: number): Promise<void> {
       await this.verifyConversationAccess(userId, conversationId);
   
@@ -328,10 +325,6 @@ import { FileService } from 'src/modules/file/file.service';
       await this.redis.set(unreadCountKey, '0');
     }
   
-    /**
-     * getConversationWithUsers
-     * 소켓 알림 보낼 때 사용
-     */
     async getConversationWithUsers(conversationId: number) {
       const conversation = await this.prisma.conversation.findUnique({
         where: { conversation_id: conversationId },
@@ -347,9 +340,6 @@ import { FileService } from 'src/modules/file/file.service';
       };
     }
   
-    /**
-     * 권한 검증
-     */
     private async verifyConversationAccess(userId: number, conversationId: number) {
       const conversation = await this.prisma.conversation.findUnique({
         where: { conversation_id: conversationId },
@@ -381,9 +371,6 @@ import { FileService } from 'src/modules/file/file.service';
       });
     }
   
-    /**
-     * 상대방의 unreadCount +1
-     */
     private async incrementUnreadCount(senderId: number, conversationId: number) {
       const conversation = await this.prisma.conversation.findUnique({
         where: { conversation_id: conversationId },
