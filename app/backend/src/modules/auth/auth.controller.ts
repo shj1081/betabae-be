@@ -1,11 +1,4 @@
-import {
-  BadRequestException,
-  Body,
-  Controller,
-  Post,
-  Req,
-  Res,
-} from '@nestjs/common';
+import { BadRequestException, Body, Controller, Post, Req, Res } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { LoginRequestDto } from 'src/dto/auth/login.request.dto';
 import { RegisterRequestDto } from 'src/dto/auth/register.request.dto';
@@ -19,10 +12,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  async register(
-    @Body() dto: RegisterRequestDto,
-    @Res({ passthrough: true }) res: Response,
-  ) {
+  async register(@Body() dto: RegisterRequestDto, @Res({ passthrough: true }) res: Response) {
     const { sessionId } = await this.authService.registerAndLogin(dto);
 
     // auto login after register
@@ -34,7 +24,7 @@ export class AuthController {
     });
 
     return new BasicResponseDto('Register successful and logged in', {
-      username: dto.username,
+      email: dto.email,
     });
   }
 
@@ -46,7 +36,7 @@ export class AuthController {
   ) {
     // session의 경우 ttl이 infinite이라고 가정
     // check if user is already logged in
-    const currentSessionId = req.cookies.session_id;
+    const currentSessionId = req.cookies.session_id as string | undefined;
     if (currentSessionId) {
       throw new BadRequestException(
         new ErrorResponseDto(
@@ -56,10 +46,7 @@ export class AuthController {
       );
     }
 
-    const { sessionId } = await this.authService.login(
-      dto.username,
-      dto.password,
-    );
+    const { sessionId } = await this.authService.login(dto.email, dto.password);
 
     res.cookie('session_id', sessionId, {
       httpOnly: true,
@@ -69,19 +56,16 @@ export class AuthController {
     });
 
     return new BasicResponseDto('Login successful', {
-      username: dto.username,
+      email: dto.email,
     });
   }
 
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const sessionId = req.cookies.session_id;
+    const sessionId = req.cookies.session_id as string | undefined;
     if (!sessionId) {
       throw new BadRequestException(
-        new ErrorResponseDto(
-          ExceptionCode.SESSION_NOT_FOUND,
-          `Session not found with ${sessionId}`,
-        ),
+        new ErrorResponseDto(ExceptionCode.SESSION_NOT_FOUND, 'Session not found'),
       );
     }
 

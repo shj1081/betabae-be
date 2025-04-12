@@ -1,5 +1,7 @@
 import { DeleteObjectCommand, PutObjectCommand, S3 } from '@aws-sdk/client-s3';
-import { Injectable } from '@nestjs/common';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ErrorResponseDto } from 'src/dto/common/error.response.dto';
+import { ExceptionCode } from 'src/enums/custom.exception.code';
 
 @Injectable()
 export class S3Service {
@@ -38,6 +40,15 @@ export class S3Service {
 
     const result = await this.s3.send(command);
 
+    if (!result) {
+      throw new InternalServerErrorException(
+        new ErrorResponseDto(
+          ExceptionCode.S3_INTERNAL_ERROR,
+          'File upload failed',
+        ),
+      );
+    }
+
     // local minio and aws s3 url format is different
     if (this.isLocal) {
       return {
@@ -65,6 +76,17 @@ export class S3Service {
       Key: key,
     });
 
-    return this.s3.send(command);
+    const result = await this.s3.send(command);
+
+    if (!result) {
+      throw new InternalServerErrorException(
+        new ErrorResponseDto(
+          ExceptionCode.S3_INTERNAL_ERROR,
+          'File delete failed',
+        ),
+      );
+    }
+
+    return result;
   }
 }
