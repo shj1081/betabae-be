@@ -74,7 +74,7 @@ export class UserService {
       },
       profile: {
         ...user.profile,
-        profile_image_url: user.profile.profile_image?.file_url, // media_id 대신 file_url만 가져옴
+        profile_image_url: user.profile.profile_image?.file_url ?? null, // media_id 대신 file_url만 가져옴
       },
     };
 
