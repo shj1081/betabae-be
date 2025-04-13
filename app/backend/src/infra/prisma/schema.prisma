@@ -12,23 +12,26 @@ model User {
   id            Int      @id @default(autoincrement())
   email         String   @unique
   password_hash String
-  name          String
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
   profile          UserProfile?
   surveyResponse   UserSurveyResponse?
   personality      UserPersonality?
+  loveLanguage     UserLoveLanguage?
   messages         Message[]
   requestedMatches Match[]             @relation("RequestedMatches") // 매칭 요청 받은 사용자
   requesterMatches Match[]             @relation("RequesterMatches") // 매칭 요청한 사용자
 }
 
 model UserProfile {
-  profile_id       Int      @id @default(autoincrement())
+  id               Int      @id @default(autoincrement())
   user_id          Int      @unique // foreign key
-  introduce        String?
-  age              Int
+  legal_name       String
+  nickname         String   @unique
+  biography        String?
+  birthday         String
+  phone_number     String
   gender           Gender
   mbti             MBTI?
   interests        String   @default("") // comma-separated interests
@@ -44,14 +47,29 @@ model UserProfile {
 
 // ---- 성격 데이터 ----
 model UserPersonality {
-  personality_id    Int      @id @default(autoincrement())
+  id                Int      @id @default(autoincrement())
   user_id           Int      @unique // foreign key
   openness          Float
   conscientiousness Float
   extraversion      Float
   agreeableness     Float
   neuroticism       Float
-  last_calculated   DateTime
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id])
+}
+
+model UserLoveLanguage {
+  id                   Int      @id @default(autoincrement())
+  user_id              Int      @unique
+  words_of_affirmation Float
+  acts_of_service      Float
+  receiving_gifts      Float
+  quality_time         Float
+  physical_touch       Float
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
 
   user User @relation(fields: [user_id], references: [id])
 }
@@ -70,10 +88,10 @@ model UserSurveyResponse {
 // ---- 매칭 시스템 ----
 model Match {
   match_id          Int         @id @default(autoincrement())
-  requester_id      Int // 매칭 요청한 사용자
-  requested_id      Int // 매칭 요청 받은 사용자
-  requester_consent Boolean     @default(true) // 요청자는 기본적으로 동의한 상태
-  requested_consent Boolean     @default(false) // 요청 받은 사용자의 동의 여부
+  requester_id      Int         // 매칭 요청한 사용자
+  requested_id      Int         // 매칭 요청 받은 사용자
+  requester_consent Boolean     @default(true)   // 요청자는 기본적으로 동의한 상태
+  requested_consent Boolean     @default(false)  // 요청 받은 사용자의 동의 여부
   status            MatchStatus @default(PENDING)
   created_at        DateTime    @default(now())
   updated_at        DateTime    @updatedAt
@@ -108,6 +126,8 @@ model Message {
   is_read             Boolean   @default(false)
   read_at             DateTime? // TODO: 읽은 시간인데 필요한지 확인
   attachment_media_id Int?
+  created_at          DateTime  @default(now())
+  updated_at          DateTime  @updatedAt
 
   conversation Conversation @relation(fields: [conversation_id], references: [conversation_id])
   sender       User         @relation(fields: [sender_id], references: [id])
@@ -129,19 +149,12 @@ model Media {
   userProfiles UserProfile[]
 }
 
-// ---- BetaBae 프롬프트 관리 ----
-model BetaBaePrompt {
-  prompt_id  Int      @id @default(autoincrement())
-  template   String   @db.Text
-  is_active  Boolean  @default(true)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-}
-
 // ---- enum 정의 ----
 enum Gender {
   MALE
   FEMALE
+  NON_BINARY
+  OTHER
 }
 
 enum MBTI {
