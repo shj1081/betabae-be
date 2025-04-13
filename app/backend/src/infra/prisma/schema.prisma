@@ -106,7 +106,7 @@ model Match {
 
 // ---- 채팅 시스템 ----
 model Conversation {
-  conversation_id Int              @id @default(autoincrement())
+  id              Int              @id @default(autoincrement())
   match_id        Int
   type            ConversationType @default(BETA_BAE)
   created_at      DateTime         @default(now())
@@ -129,7 +129,7 @@ model Message {
   created_at          DateTime  @default(now())
   updated_at          DateTime  @updatedAt
 
-  conversation Conversation @relation(fields: [conversation_id], references: [conversation_id])
+  conversation Conversation @relation(fields: [conversation_id], references: [id])
   sender       User         @relation(fields: [sender_id], references: [id])
   media        Media?       @relation(fields: [attachment_media_id], references: [media_id]) // TODO: 다중 미디어 지원 시 수정 필요
 
