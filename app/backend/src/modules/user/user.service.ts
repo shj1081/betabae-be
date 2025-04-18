@@ -12,6 +12,8 @@ import { UserPersonalityDto } from 'src/dto/user/personality.request.dto';
 import { UserPersonalityResponseDto } from 'src/dto/user/personality.response.dto';
 import { UserProfileDto } from 'src/dto/user/profile.request.dto';
 import { UserProfileResponseDto } from 'src/dto/user/profile.response.dto';
+import { UserLoveLanguageDto } from 'src/dto/user/lovelanguage.request.dto';
+import { UserLoveLanguageResponseDto } from 'src/dto/user/lovelanguage.response.dto';
 import { ExceptionCode } from 'src/enums/custom.exception.code';
 import { PrismaService } from 'src/infra/prisma/prisma.service';
 
@@ -277,5 +279,73 @@ export class UserService {
 
     return { success: true, message: 'Password updated successfully.' };
   }
+
+  async getUserLoveLanguage(userId: number) {
+    const loveLanguage = await this.prisma.userLoveLanguage.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (!loveLanguage) {
+      throw new NotFoundException(
+        new ErrorResponseDto(
+          ExceptionCode.USER_PERSONALITY_NOT_FOUND, // Consider making a new ExceptionCode for love language
+          `Love language data for user with ID ${userId} not found`,
+        ),
+      );
+    }
+
+    return plainToInstance(UserLoveLanguageResponseDto, loveLanguage, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async updateOrCreateUserLoveLanguage(userId: number, dto: UserLoveLanguageDto) {
+    // Check if user exists
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException(
+        new ErrorResponseDto(
+          ExceptionCode.USER_NOT_FOUND,
+          `User with ID ${userId} not found`,
+        ),
+      );
+    }
+
+    // Check if love language exists, upsert if needed
+    const existingLoveLanguage = await this.prisma.userLoveLanguage.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (existingLoveLanguage) {
+      // Update existing love language
+      return this.prisma.userLoveLanguage.update({
+        where: { user_id: userId },
+        data: {
+          words_of_affirmation: dto.words_of_affirmation,
+          acts_of_service: dto.acts_of_service,
+          receiving_gifts: dto.receiving_gifts,
+          quality_time: dto.quality_time,
+          physical_touch: dto.physical_touch,
+          updated_at: new Date(),
+        },
+      });
+    } else {
+      // Create new love language
+      return this.prisma.userLoveLanguage.create({
+        data: {
+          user_id: userId,
+          words_of_affirmation: dto.words_of_affirmation,
+          acts_of_service: dto.acts_of_service,
+          receiving_gifts: dto.receiving_gifts,
+          quality_time: dto.quality_time,
+          physical_touch: dto.physical_touch,
+          updated_at: new Date(),
+        },
+      });
+    }
+  }
 }
+
 

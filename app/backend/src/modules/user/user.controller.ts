@@ -4,6 +4,7 @@ import { BasicResponseDto } from 'src/dto/common/basic.response.dto';
 import { UpdateCredentialDto } from 'src/dto/user/credential.request.dto';
 import { UserPersonalityDto } from 'src/dto/user/personality.request.dto';
 import { UserProfileDto } from 'src/dto/user/profile.request.dto';
+import { UserLoveLanguageDto } from 'src/dto/user/lovelanguage.request.dto';
 import { AuthGuard } from '../auth/auth.guard';
 import { UserService } from './user.service';
 
@@ -118,4 +119,48 @@ export class UserController {
 
     return new BasicResponseDto('Password updated successfully', result);
   }
+
+  /**
+   * Get the love language information of the current user.
+   *
+   * @summary Get the love language information of the current user.
+   * @throws {NotFoundException} If the user is not found.
+   * @returns {BasicResponseDto} The love language data of the user in the response body.
+   */
+  @UseGuards(AuthGuard)
+  @Get('lovelanguage')
+  async getUserLoveLanguage(@Req() req: Request) {
+    const userId = Number(req['user'].id);
+    const loveLanguageData = await this.userService.getUserLoveLanguage(userId);
+
+    return new BasicResponseDto(
+      'User love language retrieved successfully',
+      loveLanguageData,
+    );
+  }
+
+  /**
+   * Update or create the love language information of the current user.
+   *
+   * @summary Update or create the love language information of the current user.
+   * @throws {NotFoundException} If the user is not found.
+   * @throws {BadRequestException} If the dto is invalid.
+   * @returns {BasicResponseDto} The updated love language data of the user in the response body.
+   */
+  @UseGuards(AuthGuard)
+  @Put('lovelanguage')
+  async updateOrCreateUserLoveLanguage(
+    @Req() req: Request,
+    @Body() dto: UserLoveLanguageDto,
+  ) {
+    const userId = Number(req['user'].id);
+    const updatedLoveLanguage =
+      await this.userService.updateOrCreateUserLoveLanguage(userId, dto);
+
+    return new BasicResponseDto(
+      'User love language updated successfully',
+      updatedLoveLanguage,
+    );
+  }
 }
+
