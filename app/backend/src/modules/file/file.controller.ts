@@ -19,6 +19,14 @@ import { FileService } from './file.service';
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
+  /**
+   * Uploads a file to the server with the specified context.
+   * 
+   * @param file The file to be uploaded.
+   * @param body The request body containing context information.
+   * @returns A promise that resolves to the upload file response DTO.
+   * @throws BadRequestException if the file or context is not provided.
+   */
   @UseGuards(AuthGuard)
   @Post()
   @UseInterceptors(FileInterceptor('file'))
@@ -29,6 +37,12 @@ export class FileController {
     return this.fileService.uploadFile(file, body.context);
   }
 
+  /**
+   * Deletes a file by its ID.
+   * 
+   * @param id The ID of the file to be deleted.
+   * @throws BadRequestException if the file is not found.
+   */
   @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteFile(@Param('id', ParseIntPipe) id: number): Promise<void> {

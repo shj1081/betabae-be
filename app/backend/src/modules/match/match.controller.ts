@@ -18,6 +18,12 @@ import { MatchService } from './match.service';
 export class MatchController {
   constructor(private readonly matchService: MatchService) {}
 
+  /**
+   * Creates a match request from the current user to the requested user
+   * @param req the request object, which contains the user's id in the session
+   * @param dto the requested user's id
+   * @returns a BasicResponseDto containing the created match
+   */
   @UseGuards(AuthGuard)
   @Post()
   async createMatch(
@@ -30,6 +36,12 @@ export class MatchController {
     return new BasicResponseDto('Match request sent successfully', match);
   }
 
+  /**
+   * Accepts a match request from the current user to the user who requested the match
+   * @param req the request object, which contains the user's id in the session
+   * @param matchId the id of the match to accept
+   * @returns a BasicResponseDto containing the accepted match
+   */
   @UseGuards(AuthGuard)
   @Post(':id/accept')
   async acceptMatch(
@@ -42,6 +54,12 @@ export class MatchController {
     return new BasicResponseDto('Match accepted successfully', match);
   }
 
+  /**
+   * Rejects a match request from the current user to the user who requested the match
+   * @param req the request object, which contains the user's id in the session
+   * @param matchId the id of the match to reject
+   * @returns a BasicResponseDto containing the rejected match
+   */
   @UseGuards(AuthGuard)
   @Post(':id/reject')
   async rejectMatch(
@@ -54,6 +72,11 @@ export class MatchController {
     return new BasicResponseDto('Match rejected successfully', match);
   }
 
+  /**
+   * Retrieves all match requests sent to the current user
+   * @param req the request object, which contains the user's id in the session
+   * @returns a BasicResponseDto containing the received match requests
+   */
   @UseGuards(AuthGuard)
   @Get('received')
   async getReceivedMatches(@Req() req: Request) {
@@ -66,6 +89,11 @@ export class MatchController {
     );
   }
 
+  /**
+   * Retrieves all match requests associated with the current user
+   * @param req the request object, which contains the user's id in the session
+   * @returns a BasicResponseDto containing all matches
+   */
   @UseGuards(AuthGuard)
   @Get()
   async getAllMatches(@Req() req: Request) {

@@ -11,6 +11,15 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  /**
+   * Handles user registration by validating credentials and creating a session.
+   * 
+   * After registration, a session ID is generated and stored in a cookie.
+   * 
+   * @param dto - Data transfer object containing email and password for registration
+   * @param res - Response object to set cookies
+   * @returns A response indicating successful registration with user email and
+   */
   @Post('register')
   async register(@Body() dto: RegisterRequestDto, @Res({ passthrough: true }) res: Response) {
     const { sessionId } = await this.authService.registerAndLogin(dto);
@@ -28,6 +37,18 @@ export class AuthController {
     });
   }
 
+  /**
+   * Handles user login by validating credentials and creating a session.
+   * 
+   * If a session already exists, an exception is thrown.
+   * On successful login, a session ID is generated and stored in a cookie.
+   * 
+   * @param dto - Data transfer object containing email and password for login
+   * @param req - Request object to access cookies
+   * @param res - Response object to set cookies
+   * @returns A response indicating successful login with user email
+   * @throws BadRequestException if user is already logged in
+   */
   @Post('login')
   async login(
     @Body() dto: LoginRequestDto,
@@ -60,6 +81,14 @@ export class AuthController {
     });
   }
 
+  /**
+   * Logs out the current user by clearing the session cookie and removing the session from storage.
+   * 
+   * @param req - Request object to access cookies to get the session ID.
+   * @param res - Response object to clear the session cookie.
+   * @returns A response indicating successful logout.
+   * @throws BadRequestException if there is no session ID found in cookies.
+   */
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const sessionId = req.cookies.session_id as string | undefined;

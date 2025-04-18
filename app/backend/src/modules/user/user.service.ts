@@ -26,11 +26,12 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        legal_name: true,
         profile: {
           select: {
+            nickname: true,
+            birthday: true,
             introduce: true,
-            age: true,
             gender: true,
             mbti: true,
             interests: true,
@@ -55,27 +56,26 @@ export class UserService {
       );
     }
 
-    // TODO: 이거로 회원 가입만 하고 기본 정보 안넣은거 확인 가능?
-    if (!user.profile) {
-      throw new NotFoundException(
-        new ErrorResponseDto(
-          ExceptionCode.USER_PROFILE_NOT_FOUND,
-          `Profile for user with ID ${userId} not found`,
-        ),
-      );
-    }
-
     // profile_image_url 필드를 직접 매핑
     const profileData = {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        legal_name: user.legal_name,
       },
-      profile: {
-        ...user.profile,
-        profile_image_url: user.profile.profile_image?.file_url ?? null, // media_id 대신 file_url만 가져옴
-      },
+      profile: user.profile
+        ? {
+            nickname: user.profile.nickname,
+            birthday: user.profile.birthday,
+            introduce: user.profile.introduce,
+            gender: user.profile.gender,
+            mbti: user.profile.mbti,
+            interests: user.profile.interests,
+            province: user.profile.province,
+            city: user.profile.city,
+            profile_image_url: user.profile.profile_image?.file_url || null,
+          }
+        : null,
     };
 
     return plainToInstance(UserProfileResponseDto, profileData, {
@@ -98,13 +98,7 @@ export class UserService {
       );
     }
 
-    // Update User name if provided
-    if (dto.name) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { name: dto.name },
-      });
-    }
+
 
     // Check if profile exists
     const existingProfile = await this.prisma.userProfile.findUnique({
@@ -114,12 +108,12 @@ export class UserService {
     // 프로필 생성 또는 업데이트
     if (existingProfile) {
       // interests 처리
-      const interests = dto.interests ? dto.interests.join(',') : undefined;
+      const interests = dto.interests ? dto.interests : undefined;
 
       // 업데이트용 프로필 데이터 객체 구성 - null/undefined가 아닌 필드만 포함
       const profileData = Object.entries({
-        introduce: dto.introduce,
-        age: dto.age,
+        nickname: dto.nickname,
+        birthday: new Date(dto.birthday),
         gender: dto.gender,
         mbti: dto.mbti,
         interests,
@@ -132,15 +126,16 @@ export class UserService {
 
       // 업데이트할 내용이 있는 경우만 업데이트
       if (Object.keys(profileData).length > 0) {
-        await this.prisma.userProfile.update({
-          where: { user_id: userId },
+        await this.prisma.user.update({
+          where: { id: userId },
           data: profileData,
         });
       }
     } else {
-      // 프로필 생성 시 필수 정보 검증
+      // 프로필 생성 시 필수 정보
       if (
-        dto.age === undefined ||
+        dto.nickname === undefined ||
+        dto.birthday === undefined ||
         dto.gender === undefined ||
         dto.province === undefined ||
         dto.city === undefined
@@ -155,21 +150,23 @@ export class UserService {
 
       // 새 프로필 생성을 위한 타입 안전한 데이터 객체 생성
       const createProfileData = {
-        user_id: userId,
-        // 필수 필드를 명시적으로 설정
-        age: dto.age!,
+        nickname: dto.nickname!,
+        birthday: new Date(dto.birthday!),
         gender: dto.gender!,
         province: dto.province!,
         city: dto.city!,
-
-        // 선택적 필드
-        introduce: dto.introduce,
         mbti: dto.mbti,
-        interests: dto.interests ? dto.interests.join(',') : '',
+        interests: dto.interests,
       };
 
       await this.prisma.userProfile.create({
-        data: createProfileData,
+        data: {
+          user_id: userId,
+          ...createProfileData,
+          interests: Array.isArray(dto.interests)
+            ? dto.interests.join(',')
+            : dto.interests || '',
+        },
       });
     }
 
@@ -227,7 +224,7 @@ export class UserService {
           extraversion: dto.extraversion,
           agreeableness: dto.agreeableness,
           neuroticism: dto.neuroticism,
-          last_calculated: new Date(),
+          updated_at: new Date(),
         },
       });
     } else {
@@ -240,21 +237,17 @@ export class UserService {
           extraversion: dto.extraversion,
           agreeableness: dto.agreeableness,
           neuroticism: dto.neuroticism,
-          last_calculated: new Date(),
+          updated_at: new Date(),
         },
       });
     }
   }
 
   async updateUserCredential(userId: number, dto: UpdateCredentialDto) {
-    // Find the user with all fields
+    // 1. Find the user
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        password_hash: true,
-      },
     });
-
     if (!user) {
       throw new NotFoundException(
         new ErrorResponseDto(
@@ -264,12 +257,9 @@ export class UserService {
       );
     }
 
-    // Verify the current password
-    const isPasswordValid = await bcrypt.compare(
-      dto.currentPassword,
-      user.password_hash,
-    );
-    if (!isPasswordValid) {
+    // 2. Compare passwords
+    const passwordMatch = await bcrypt.compare(dto.currentPassword, user.password_hash);
+    if (!passwordMatch) {
       throw new UnauthorizedException(
         new ErrorResponseDto(
           ExceptionCode.INVALID_CREDENTIALS,
@@ -278,18 +268,14 @@ export class UserService {
       );
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-
-    // Update the password_hash field
+    // 3. Hash new password
+    const newHash = await bcrypt.hash(dto.newPassword, 10);
     await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        password_hash: hashedPassword,
-        updated_at: new Date(),
-      },
+      data: { password_hash: newHash },
     });
 
-    return { success: true };
+    return { success: true, message: 'Password updated successfully.' };
   }
 }
+

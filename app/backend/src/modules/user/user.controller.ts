@@ -11,6 +11,13 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  /**
+   * Get the profile information of the current user.
+   *
+   * @summary Get the profile information of the current user.
+   * @throws {NotFoundException} If the user is not found.
+   * @returns {BasicResponseDto} The profile data of the user in the response body.
+   */
   @UseGuards(AuthGuard)
   @Get('profile')
   async getUserProfile(@Req() req: Request) {
@@ -23,6 +30,14 @@ export class UserController {
     );
   }
 
+  /**
+   * Update or create the profile information of the current user.
+   *
+   * @summary Update or create the profile information of the current user.
+   * @throws {NotFoundException} If the user is not found.
+   * @throws {BadRequestException} If the dto is invalid.
+   * @returns {BasicResponseDto} The updated profile data of the user in the response body.
+   */
   @UseGuards(AuthGuard)
   @Put('profile')
   async updateOrCreateUserProfile(
@@ -41,6 +56,13 @@ export class UserController {
     );
   }
 
+  /**
+   * Get the personality information of the current user.
+   *
+   * @summary Get the personality information of the current user.
+   * @throws {NotFoundException} If the user is not found.
+   * @returns {BasicResponseDto} The personality data of the user in the response body.
+   */
   @UseGuards(AuthGuard)
   @Get('personality')
   async getUserPersonality(@Req() req: Request) {
@@ -53,6 +75,14 @@ export class UserController {
     );
   }
 
+  /**
+   * Update or create the personality information of the current user.
+   *
+   * @summary Update or create the personality information of the current user.
+   * @throws {NotFoundException} If the user is not found.
+   * @throws {BadRequestException} If the dto is invalid.
+   * @returns {BasicResponseDto} The updated personality data of the user in the response body.
+   */
   @UseGuards(AuthGuard)
   @Put('personality')
   async updateOrCreateUserPersonality(
@@ -69,6 +99,14 @@ export class UserController {
     );
   }
 
+  /**
+   * Update the credential information of the current user.
+   *
+   * @summary Update the credential information of the current user, such as the password.
+   * @throws {UnauthorizedException} If the current password is incorrect.
+   * @throws {NotFoundException} If the user is not found.
+   * @returns {BasicResponseDto} A response indicating the password was updated successfully.
+   */
   @UseGuards(AuthGuard)
   @Put('credential')
   async updateUserCredential(
