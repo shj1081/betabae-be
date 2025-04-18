@@ -2,7 +2,7 @@ import { Expose, Transform } from 'class-transformer';
 
 export class UserPersonalityResponseDto {
   @Expose()
-  personality_id: number;
+  id: number;
 
   @Expose()
   user_id: number;
@@ -24,7 +24,11 @@ export class UserPersonalityResponseDto {
   
   @Expose()
   @Transform(({ value }) => value?.toISOString())
-  last_calculated: Date;
+  created_at: Date;
+
+  @Expose()
+  @Transform(({ value }) => value?.toISOString())
+  updated_at: Date;
   
   // No need to explicitly exclude other fields
   // Only fields with @Expose will be included when using plainToInstance
