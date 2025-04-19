@@ -9,7 +9,7 @@ export class UserDto {
   email: string;
 
   @Expose()
-  name: string;
+  legal_name: string;
 
   // @Expose()
   // @Transform(({ value }) => value?.toISOString())
@@ -27,7 +27,10 @@ export class ProfileDto {
   introduce?: string;
 
   @Expose()
-  age: number;
+  nickname: string;
+
+  @Expose()
+  birthday: Date;
 
   @Expose()
   gender: Gender;

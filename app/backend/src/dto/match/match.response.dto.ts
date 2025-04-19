@@ -14,7 +14,7 @@ export class MatchUserInfoDto {
 
 export class MatchResponseDto {
   @Expose()
-  matchId: number;
+  id: number;
 
   @Expose()
   @Type(() => MatchUserInfoDto)
@@ -35,9 +35,9 @@ export class MatchResponseDto {
   
   @Expose()
   @Transform(({ value }) => value?.toISOString())
-  createdAt: Date;
+  created_at: Date;
 
   @Expose()
   @Transform(({ value }) => value?.toISOString())
-  updatedAt: Date;
+  updated_at: Date;
 }

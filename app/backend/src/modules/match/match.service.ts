@@ -83,15 +83,15 @@ export class MatchService {
         requester: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
+            
           },
         },
         requested: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
+            
           },
         },
       },
@@ -125,7 +125,7 @@ export class MatchService {
 
     // Update match status to ACCEPTED
     const updatedMatch = await this.prisma.match.update({
-      where: { match_id: matchId },
+      where: { id: matchId },
       data: {
         status: MatchStatus.ACCEPTED,
         requested_consent: true,
@@ -134,15 +134,15 @@ export class MatchService {
         requester: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
+            
           },
         },
         requested: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
+            
           },
         },
       },
@@ -184,7 +184,7 @@ export class MatchService {
 
     // Update match status to REJECTED
     const updatedMatch = await this.prisma.match.update({
-      where: { match_id: matchId },
+      where: { id: matchId },
       data: {
         status: MatchStatus.REJECTED,
       },
@@ -192,15 +192,13 @@ export class MatchService {
         requester: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
           },
         },
         requested: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
           },
         },
       },
@@ -219,15 +217,15 @@ export class MatchService {
         requester: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
+            
           },
         },
         requested: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
+            
           },
         },
       },
@@ -251,15 +249,15 @@ export class MatchService {
         requester: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
+            
           },
         },
         requested: {
           select: {
             id: true,
-            name: true,
-            email: true,
+            legal_name: true,
+            
           },
         },
       },
@@ -273,7 +271,7 @@ export class MatchService {
 
   private async getMatchById(matchId: number) {
     const match = await this.prisma.match.findUnique({
-      where: { match_id: matchId },
+      where: { id: matchId },
     });
 
     if (!match) {
@@ -292,7 +290,7 @@ export class MatchService {
     return plainToInstance(
       MatchResponseDto,
       {
-        matchId: match.match_id,
+        id: match.id,
         requester: match.requester,
         requested: match.requested,
         status: match.status,

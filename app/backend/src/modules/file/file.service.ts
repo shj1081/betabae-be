@@ -13,19 +13,19 @@ export class FileService {
     private readonly s3Service: S3Service,
   ) {}
 
-  // async getFile(fileId: number): Promise<string> {
-  //   const media = await this.prisma.media.findUnique({
-  //     where: { media_id: fileId },
-  //   });
+  async getFile(fileId: number): Promise<string> {
+    const media = await this.prisma.media.findUnique({
+      where: { id: fileId },
+    });
 
-  //   if (!media) {
-  //     throw new BadRequestException(
-  //       new ErrorResponseDto(ExceptionCode.FILE_NOT_FOUND, 'File not found'),
-  //     );
-  //   }
+    if (!media) {
+      throw new BadRequestException(
+        new ErrorResponseDto(ExceptionCode.FILE_NOT_FOUND, 'File not found'),
+      );
+    }
 
-  //   return media.file_url;
-  // }
+    return media.file_url;
+  }
 
   async uploadFile(
     file: Express.Multer.File,
@@ -60,7 +60,7 @@ export class FileService {
     });
 
     return {
-      id: media.media_id,
+      id: media.id,
       url: media.file_url,
       type: media.file_type,
     };
@@ -68,7 +68,7 @@ export class FileService {
 
   async deleteFile(fileId: number): Promise<void> {
     const media = await this.prisma.media.findUnique({
-      where: { media_id: fileId },
+      where: { id: fileId },
     });
 
     if (!media) {
@@ -79,7 +79,7 @@ export class FileService {
 
     // DB -> S3 순서로 진행하여 무결성 보장
     await this.prisma.media.delete({
-      where: { media_id: fileId },
+      where: { id: fileId },
     });
     await this.s3Service.deleteFile(media.file_url);
   }

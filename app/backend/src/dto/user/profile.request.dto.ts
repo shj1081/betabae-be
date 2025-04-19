@@ -5,20 +5,22 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsNotEmpty,
+  IsDateString,
 } from 'class-validator';
 
 export class UserProfileDto {
   @IsString()
-  @IsOptional()
-  name?: string;
+  @IsNotEmpty()
+  nickname: string;
 
   @IsString()
   @IsOptional()
   introduce?: string;
 
-  @IsNumber()
-  @IsOptional()
-  age?: number;
+  @IsDateString()
+  @IsNotEmpty()
+  birthday: string;
 
   @IsEnum(Gender)
   @IsOptional()

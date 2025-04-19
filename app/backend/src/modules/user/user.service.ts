@@ -12,6 +12,8 @@ import { UserPersonalityDto } from 'src/dto/user/personality.request.dto';
 import { UserPersonalityResponseDto } from 'src/dto/user/personality.response.dto';
 import { UserProfileDto } from 'src/dto/user/profile.request.dto';
 import { UserProfileResponseDto } from 'src/dto/user/profile.response.dto';
+import { UserLoveLanguageDto } from 'src/dto/user/lovelanguage.request.dto';
+import { UserLoveLanguageResponseDto } from 'src/dto/user/lovelanguage.response.dto';
 import { ExceptionCode } from 'src/enums/custom.exception.code';
 import { PrismaService } from 'src/infra/prisma/prisma.service';
 
@@ -26,11 +28,12 @@ export class UserService {
       select: {
         id: true,
         email: true,
-        name: true,
+        legal_name: true,
         profile: {
           select: {
+            nickname: true,
+            birthday: true,
             introduce: true,
-            age: true,
             gender: true,
             mbti: true,
             interests: true,
@@ -55,27 +58,26 @@ export class UserService {
       );
     }
 
-    // TODO: 이거로 회원 가입만 하고 기본 정보 안넣은거 확인 가능?
-    if (!user.profile) {
-      throw new NotFoundException(
-        new ErrorResponseDto(
-          ExceptionCode.USER_PROFILE_NOT_FOUND,
-          `Profile for user with ID ${userId} not found`,
-        ),
-      );
-    }
-
     // profile_image_url 필드를 직접 매핑
     const profileData = {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name,
+        legal_name: user.legal_name,
       },
-      profile: {
-        ...user.profile,
-        profile_image_url: user.profile.profile_image?.file_url ?? null, // media_id 대신 file_url만 가져옴
-      },
+      profile: user.profile
+        ? {
+            nickname: user.profile.nickname,
+            birthday: user.profile.birthday,
+            introduce: user.profile.introduce,
+            gender: user.profile.gender,
+            mbti: user.profile.mbti,
+            interests: user.profile.interests,
+            province: user.profile.province,
+            city: user.profile.city,
+            profile_image_url: user.profile.profile_image?.file_url || null,
+          }
+        : null,
     };
 
     return plainToInstance(UserProfileResponseDto, profileData, {
@@ -98,13 +100,7 @@ export class UserService {
       );
     }
 
-    // Update User name if provided
-    if (dto.name) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { name: dto.name },
-      });
-    }
+
 
     // Check if profile exists
     const existingProfile = await this.prisma.userProfile.findUnique({
@@ -114,12 +110,12 @@ export class UserService {
     // 프로필 생성 또는 업데이트
     if (existingProfile) {
       // interests 처리
-      const interests = dto.interests ? dto.interests.join(',') : undefined;
+      const interests = dto.interests ? dto.interests : undefined;
 
       // 업데이트용 프로필 데이터 객체 구성 - null/undefined가 아닌 필드만 포함
       const profileData = Object.entries({
-        introduce: dto.introduce,
-        age: dto.age,
+        nickname: dto.nickname,
+        birthday: new Date(dto.birthday),
         gender: dto.gender,
         mbti: dto.mbti,
         interests,
@@ -138,9 +134,10 @@ export class UserService {
         });
       }
     } else {
-      // 프로필 생성 시 필수 정보 검증
+      // 프로필 생성 시 필수 정보
       if (
-        dto.age === undefined ||
+        dto.nickname === undefined ||
+        dto.birthday === undefined ||
         dto.gender === undefined ||
         dto.province === undefined ||
         dto.city === undefined
@@ -155,21 +152,23 @@ export class UserService {
 
       // 새 프로필 생성을 위한 타입 안전한 데이터 객체 생성
       const createProfileData = {
-        user_id: userId,
-        // 필수 필드를 명시적으로 설정
-        age: dto.age!,
+        nickname: dto.nickname!,
+        birthday: new Date(dto.birthday!),
         gender: dto.gender!,
         province: dto.province!,
         city: dto.city!,
-
-        // 선택적 필드
-        introduce: dto.introduce,
         mbti: dto.mbti,
-        interests: dto.interests ? dto.interests.join(',') : '',
+        interests: dto.interests,
       };
 
       await this.prisma.userProfile.create({
-        data: createProfileData,
+        data: {
+          user_id: userId,
+          ...createProfileData,
+          interests: Array.isArray(dto.interests)
+            ? dto.interests.join(',')
+            : dto.interests || '',
+        },
       });
     }
 
@@ -227,7 +226,7 @@ export class UserService {
           extraversion: dto.extraversion,
           agreeableness: dto.agreeableness,
           neuroticism: dto.neuroticism,
-          last_calculated: new Date(),
+          updated_at: new Date(),
         },
       });
     } else {
@@ -240,21 +239,17 @@ export class UserService {
           extraversion: dto.extraversion,
           agreeableness: dto.agreeableness,
           neuroticism: dto.neuroticism,
-          last_calculated: new Date(),
+          updated_at: new Date(),
         },
       });
     }
   }
 
   async updateUserCredential(userId: number, dto: UpdateCredentialDto) {
-    // Find the user with all fields
+    // 1. Find the user
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        password_hash: true,
-      },
     });
-
     if (!user) {
       throw new NotFoundException(
         new ErrorResponseDto(
@@ -264,12 +259,9 @@ export class UserService {
       );
     }
 
-    // Verify the current password
-    const isPasswordValid = await bcrypt.compare(
-      dto.currentPassword,
-      user.password_hash,
-    );
-    if (!isPasswordValid) {
+    // 2. Compare passwords
+    const passwordMatch = await bcrypt.compare(dto.currentPassword, user.password_hash);
+    if (!passwordMatch) {
       throw new UnauthorizedException(
         new ErrorResponseDto(
           ExceptionCode.INVALID_CREDENTIALS,
@@ -278,18 +270,108 @@ export class UserService {
       );
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(dto.newPassword, 10);
-
-    // Update the password_hash field
+    // 3. Hash new password
+    const newHash = await bcrypt.hash(dto.newPassword, 10);
     await this.prisma.user.update({
       where: { id: userId },
-      data: {
-        password_hash: hashedPassword,
-        updated_at: new Date(),
-      },
+      data: { password_hash: newHash },
     });
 
-    return { success: true };
+    return { success: true, message: 'Password updated successfully.' };
+  }
+
+  async getUserLoveLanguage(userId: number) {
+    const loveLanguage = await this.prisma.userLoveLanguage.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (!loveLanguage) {
+      throw new NotFoundException(
+        new ErrorResponseDto(
+          ExceptionCode.USER_PERSONALITY_NOT_FOUND, // Consider making a new ExceptionCode for love language
+          `Love language data for user with ID ${userId} not found`,
+        ),
+      );
+    }
+
+    return plainToInstance(UserLoveLanguageResponseDto, loveLanguage, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  async updateOrCreateUserLoveLanguage(userId: number, dto: UserLoveLanguageDto) {
+    // Check if user exists
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new NotFoundException(
+        new ErrorResponseDto(
+          ExceptionCode.USER_NOT_FOUND,
+          `User with ID ${userId} not found`,
+        ),
+      );
+    }
+
+    // Check if love language exists, upsert if needed
+    const existingLoveLanguage = await this.prisma.userLoveLanguage.findUnique({
+      where: { user_id: userId },
+    });
+
+    if (existingLoveLanguage) {
+      // Update existing love language
+      return this.prisma.userLoveLanguage.update({
+        where: { user_id: userId },
+        data: {
+          words_of_affirmation: dto.words_of_affirmation,
+          acts_of_service: dto.acts_of_service,
+          receiving_gifts: dto.receiving_gifts,
+          quality_time: dto.quality_time,
+          physical_touch: dto.physical_touch,
+          updated_at: new Date(),
+        },
+      });
+    } else {
+      // Create new love language
+      return this.prisma.userLoveLanguage.create({
+        data: {
+          user_id: userId,
+          words_of_affirmation: dto.words_of_affirmation,
+          acts_of_service: dto.acts_of_service,
+          receiving_gifts: dto.receiving_gifts,
+          quality_time: dto.quality_time,
+          physical_touch: dto.physical_touch,
+          updated_at: new Date(),
+        },
+      });
+    }
+  }
+
+  // Calculate personality from survey answers (mock logic)
+  async scorePersonalitySurvey(dto: { answers: number[] }) {
+    const [a1, a2, a3, a4, a5] = dto.answers;
+    const personality = {
+      openness: a1,
+      conscientiousness: a2,
+      extraversion: a3,
+      agreeableness: a4,
+      neuroticism: a5,
+    };
+    return { personality };
+  }
+
+  // Calculate love language from survey answers (mock logic)
+  async scoreLoveLanguageSurvey(dto: { answers: number[] }) {
+    const [a1, a2, a3, a4, a5] = dto.answers;
+    const loveLanguage = {
+      words_of_affirmation: a1,
+      acts_of_service: a2,
+      receiving_gifts: a3,
+      quality_time: a4,
+      physical_touch: a5,
+    };
+    return { loveLanguage };
   }
 }
+
+

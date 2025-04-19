@@ -5,7 +5,7 @@ export class RegisterRequestDto {
   email: string;
 
   @IsString()
-  name: string;
+  legal_name: string;
 
   @IsString()
   @MinLength(8)

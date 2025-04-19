@@ -33,40 +33,34 @@ export class AuthService {
     // create user with basic information only
     await this.prisma.user.create({
       data: {
+        legal_name: dto.legal_name,
         email: dto.email,
         password_hash: hashedPassword,
-        name: dto.name,
       },
     });
 
-    return this.login(dto.email, dto.password);
+    // No login step since there is no password or email
+    return { sessionId: uuidv4() };
   }
 
   async login(email: string, password: string): Promise<{ sessionId: string }> {
-    // find user by email from User table
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
-
-    if (!user)
+    if (!user) {
       throw new UnauthorizedException(
-        new ErrorResponseDto(ExceptionCode.USER_NOT_FOUND, `Email ${email} not found`),
+        new ErrorResponseDto(ExceptionCode.USER_NOT_FOUND, 'User not found'),
       );
-
-    // compare password with password_hash from User table
-    const valid = await bcrypt.compare(password, user.password_hash);
-    if (!valid)
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    if (!isPasswordValid) {
       throw new UnauthorizedException(
-        new ErrorResponseDto(ExceptionCode.INVALID_CREDENTIALS, 'Password is incorrect'),
+        new ErrorResponseDto(ExceptionCode.INVALID_CREDENTIALS, 'Invalid password'),
       );
-
-    // generate sessionId
+    }
+    // Generate session
     const sessionId = uuidv4();
-    const sessionKey = `session:${sessionId}`;
-
-    // save sessionId and user_id to redis without TTL
-    await this.redis.set(sessionKey, JSON.stringify({ id: user.id, email: user.email }));
-
+    await this.redis.set(`session:${sessionId}`, JSON.stringify({ id: user.id, email: user.email }));
     return { sessionId };
   }
 

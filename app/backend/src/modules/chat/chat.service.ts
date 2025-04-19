@@ -47,9 +47,9 @@ import { FileService } from 'src/modules/file/file.service';
           requester: {
             select: {
               id: true,
-              name: true,
               profile: {
                 select: {
+                  nickname: true,
                   profile_image: {
                     select: { file_url: true },
                   },
@@ -60,9 +60,9 @@ import { FileService } from 'src/modules/file/file.service';
           requested: {
             select: {
               id: true,
-              name: true,
               profile: {
                 select: {
+                  nickname: true,
                   profile_image: {
                     select: { file_url: true },
                   },
@@ -80,7 +80,7 @@ import { FileService } from 'src/modules/file/file.service';
                 take: 1,
                 include: {
                   sender: {
-                    select: { id: true, name: true },
+                    select: { id: true },
                   },
                   media: true,
                 },
@@ -95,12 +95,15 @@ import { FileService } from 'src/modules/file/file.service';
         matches.map(async (match) => {
           const isRequester = match.requester_id === userId;
           const chatPartner = isRequester ? match.requested : match.requester;
-  
+
+          const chatPartnerNickname = chatPartner.profile?.nickname ?? '';
+          const chatPartnerProfileImageUrl = chatPartner.profile?.profile_image?.file_url;
+
           const conversation = match.conversations[0]; 
           if (!conversation) return null;
   
           // redis unread count
-          const unreadCountKey = `unread:${userId}:${conversation.conversation_id}`;
+          const unreadCountKey = `unread:${userId}:${conversation.id}`;
           const unreadCountStr = await this.redis.get(unreadCountKey);
           const unreadCount = unreadCountStr ? parseInt(unreadCountStr, 10) : 0;
           totalUnreadCount += unreadCount;
@@ -111,13 +114,14 @@ import { FileService } from 'src/modules/file/file.service';
               : undefined;
   
           return {
-            conversationId: conversation.conversation_id,
-            matchId: match.match_id,
+            conversationId: conversation.id,
+            matchId: match.id,
             type: conversation.type,
             chatPartner: {
               id: chatPartner.id,
-              name: chatPartner.name,
-              profileImageUrl: chatPartner.profile?.profile_image?.file_url,
+              name: chatPartnerNickname, // for DTO compatibility
+              nickname: chatPartnerNickname,
+              profileImageUrl: chatPartnerProfileImageUrl,
             },
             unreadCount,
             lastMessage,
@@ -145,7 +149,7 @@ import { FileService } from 'src/modules/file/file.service';
     ) {
       // DB에서 conversation
       const conversation = await this.prisma.conversation.findUnique({
-        where: { conversation_id: conversationId },
+        where: { id: conversationId },
         include: { match: true },
       });
       if (!conversation) {
@@ -181,7 +185,7 @@ import { FileService } from 'src/modules/file/file.service';
   
       const whereCondition: any = { conversation_id: conversationId };
       if (before) {
-        whereCondition.message_id = { lt: before };
+        whereCondition.id = { lt: before };
       }
   
       const messages = await this.prisma.message.findMany({
@@ -189,7 +193,7 @@ import { FileService } from 'src/modules/file/file.service';
         orderBy: { sent_at: 'desc' },
         take: limit,
         include: {
-          sender: { select: { id: true, name: true } },
+          sender: { select: { id: true } },
           media: true,
         },
       });
@@ -221,7 +225,7 @@ import { FileService } from 'src/modules/file/file.service';
             is_read: false,
           },
           include: {
-            sender: { select: { id: true, name: true } },
+            sender: { select: { id: true } },
           },
         });
   
@@ -292,7 +296,7 @@ import { FileService } from 'src/modules/file/file.service';
         },
         include: {
           sender: {
-            select: { id: true, name: true },
+            select: { id: true },
           },
           media: true,
         },
@@ -327,7 +331,7 @@ import { FileService } from 'src/modules/file/file.service';
   
     async getConversationWithUsers(conversationId: number) {
       const conversation = await this.prisma.conversation.findUnique({
-        where: { conversation_id: conversationId },
+        where: { id: conversationId },
         include: { match: true },
       });
       if (!conversation) {
@@ -335,14 +339,14 @@ import { FileService } from 'src/modules/file/file.service';
       }
       return {
         matchId: conversation.match_id,
-        requesterUserId: conversation.match.requester_id,
-        requestedUserId: conversation.match.requested_id,
+        requesterUserId: conversation.match?.requester_id,
+        requestedUserId: conversation.match?.requested_id,
       };
     }
   
     private async verifyConversationAccess(userId: number, conversationId: number) {
       const conversation = await this.prisma.conversation.findUnique({
-        where: { conversation_id: conversationId },
+        where: { id: conversationId },
         include: { match: true },
       });
       if (!conversation) {
@@ -366,14 +370,14 @@ import { FileService } from 'src/modules/file/file.service';
   
     private async updateConversationActivity(conversationId: number) {
       await this.prisma.conversation.update({
-        where: { conversation_id: conversationId },
+        where: { id: conversationId },
         data: { updated_at: new Date() },
       });
     }
   
     private async incrementUnreadCount(senderId: number, conversationId: number) {
       const conversation = await this.prisma.conversation.findUnique({
-        where: { conversation_id: conversationId },
+        where: { id: conversationId },
         include: { match: true },
       });
       if (!conversation) return;
@@ -390,7 +394,7 @@ import { FileService } from 'src/modules/file/file.service';
     private mapMessageToDto(message: any): MessageResponseDto {
       const attachmentDto = message.media
         ? {
-            id: message.media.media_id,
+            id: message.media.id,
             url: message.media.file_url,
             type: message.media.file_type,
           }
@@ -399,7 +403,7 @@ import { FileService } from 'src/modules/file/file.service';
       return plainToInstance(
         MessageResponseDto,
         {
-          messageId: message.message_id,
+          messageId: message.id,
           conversationId: message.conversation_id,
           sender: {
             id: message.sender.id,
