@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Put, Post, Req, UseGuards } from '@nestjs/common';
+import { PersonalitySurveyScoreRequestDto } from 'src/dto/user/personality-survey-score.request.dto';
+import { LoveLanguageSurveyScoreRequestDto } from 'src/dto/user/lovelanguage-survey-score.request.dto';
 import { Request } from 'express';
 import { BasicResponseDto } from 'src/dto/common/basic.response.dto';
 import { UpdateCredentialDto } from 'src/dto/user/credential.request.dto';
@@ -15,9 +17,9 @@ export class UserController {
   /**
    * Get the profile information of the current user.
    *
-   * @summary Get the profile information of the current user.
-   * @throws {NotFoundException} If the user is not found.
-   * @returns {BasicResponseDto} The profile data of the user in the response body.
+   * @param req - The request object containing user information.
+   * @returns The profile data of the user in the response body.
+   * @throws NotFoundException if the user is not found.
    */
   @UseGuards(AuthGuard)
   @Get('profile')
@@ -34,10 +36,11 @@ export class UserController {
   /**
    * Update or create the profile information of the current user.
    *
-   * @summary Update or create the profile information of the current user.
-   * @throws {NotFoundException} If the user is not found.
-   * @throws {BadRequestException} If the dto is invalid.
-   * @returns {BasicResponseDto} The updated profile data of the user in the response body.
+   * @param req - The request object containing user information.
+   * @param dto - The profile data transfer object.
+   * @returns The updated profile data of the user in the response body.
+   * @throws NotFoundException if the user is not found.
+   * @throws BadRequestException if the dto is invalid.
    */
   @UseGuards(AuthGuard)
   @Put('profile')
@@ -60,9 +63,9 @@ export class UserController {
   /**
    * Get the personality information of the current user.
    *
-   * @summary Get the personality information of the current user.
-   * @throws {NotFoundException} If the user is not found.
-   * @returns {BasicResponseDto} The personality data of the user in the response body.
+   * @param req - The request object containing user information.
+   * @returns The personality data of the user in the response body.
+   * @throws NotFoundException if the user is not found.
    */
   @UseGuards(AuthGuard)
   @Get('personality')
@@ -79,10 +82,11 @@ export class UserController {
   /**
    * Update or create the personality information of the current user.
    *
-   * @summary Update or create the personality information of the current user.
-   * @throws {NotFoundException} If the user is not found.
-   * @throws {BadRequestException} If the dto is invalid.
-   * @returns {BasicResponseDto} The updated personality data of the user in the response body.
+   * @param req - The request object containing user information.
+   * @param dto - The personality data transfer object.
+   * @returns The updated personality data of the user in the response body.
+   * @throws NotFoundException if the user is not found.
+   * @throws BadRequestException if the dto is invalid.
    */
   @UseGuards(AuthGuard)
   @Put('personality')
@@ -101,12 +105,13 @@ export class UserController {
   }
 
   /**
-   * Update the credential information of the current user.
+   * Update the credential information of the current user, such as the password.
    *
-   * @summary Update the credential information of the current user, such as the password.
-   * @throws {UnauthorizedException} If the current password is incorrect.
-   * @throws {NotFoundException} If the user is not found.
-   * @returns {BasicResponseDto} A response indicating the password was updated successfully.
+   * @param req - The request object containing user information.
+   * @param dto - The credential update data transfer object.
+   * @returns A response indicating the password was updated successfully.
+   * @throws UnauthorizedException if the current password is incorrect.
+   * @throws NotFoundException if the user is not found.
    */
   @UseGuards(AuthGuard)
   @Put('credential')
@@ -123,9 +128,9 @@ export class UserController {
   /**
    * Get the love language information of the current user.
    *
-   * @summary Get the love language information of the current user.
-   * @throws {NotFoundException} If the user is not found.
-   * @returns {BasicResponseDto} The love language data of the user in the response body.
+   * @param req - The request object containing user information.
+   * @returns The love language data of the user in the response body.
+   * @throws NotFoundException if the user is not found.
    */
   @UseGuards(AuthGuard)
   @Get('lovelanguage')
@@ -142,10 +147,11 @@ export class UserController {
   /**
    * Update or create the love language information of the current user.
    *
-   * @summary Update or create the love language information of the current user.
-   * @throws {NotFoundException} If the user is not found.
-   * @throws {BadRequestException} If the dto is invalid.
-   * @returns {BasicResponseDto} The updated love language data of the user in the response body.
+   * @param req - The request object containing user information.
+   * @param dto - The love language data transfer object.
+   * @returns The updated love language data of the user in the response body.
+   * @throws NotFoundException if the user is not found.
+   * @throws BadRequestException if the dto is invalid.
    */
   @UseGuards(AuthGuard)
   @Put('lovelanguage')
@@ -162,5 +168,46 @@ export class UserController {
       updatedLoveLanguage,
     );
   }
+
+  /**
+   * Calculate and update the personality traits of the current user based on survey answers.
+   *
+   * @param dto - The personality survey score data transfer object.
+   * @returns The updated personality data of the user in the response body.
+   * @throws NotFoundException if the user is not found.
+   * @throws BadRequestException if the dto is invalid.
+   */
+  @UseGuards(AuthGuard)
+  @Post('personality/score')
+  async scorePersonalitySurvey(
+    @Body() dto: PersonalitySurveyScoreRequestDto,
+  ) {
+    const result = await this.userService.scorePersonalitySurvey(dto);
+    return new BasicResponseDto(
+      'Personality survey scored and user data updated',
+      result,
+    );
+  }
+
+  /**
+   * Calculate and update the love language of the current user based on survey answers.
+   *
+   * @param dto - The love language survey score data transfer object.
+   * @returns The updated love language data of the user in the response body.
+   * @throws NotFoundException if the user is not found.
+   * @throws BadRequestException if the dto is invalid.
+   */
+  @UseGuards(AuthGuard)
+  @Post('lovelanguage/score')
+  async scoreLoveLanguageSurvey(
+    @Body() dto: LoveLanguageSurveyScoreRequestDto,
+  ) {
+    const result = await this.userService.scoreLoveLanguageSurvey(dto);
+    return new BasicResponseDto(
+      'Love language survey scored and user data updated',
+      result,
+    );
+  }
 }
+
 

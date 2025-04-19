@@ -346,6 +346,32 @@ export class UserService {
       });
     }
   }
+
+  // Calculate personality from survey answers (mock logic)
+  async scorePersonalitySurvey(dto: { answers: number[] }) {
+    const [a1, a2, a3, a4, a5] = dto.answers;
+    const personality = {
+      openness: a1,
+      conscientiousness: a2,
+      extraversion: a3,
+      agreeableness: a4,
+      neuroticism: a5,
+    };
+    return { personality };
+  }
+
+  // Calculate love language from survey answers (mock logic)
+  async scoreLoveLanguageSurvey(dto: { answers: number[] }) {
+    const [a1, a2, a3, a4, a5] = dto.answers;
+    const loveLanguage = {
+      words_of_affirmation: a1,
+      acts_of_service: a2,
+      receiving_gifts: a3,
+      quality_time: a4,
+      physical_touch: a5,
+    };
+    return { loveLanguage };
+  }
 }
 
 
