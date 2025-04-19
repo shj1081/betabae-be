@@ -12,23 +12,18 @@ import { ExceptionCode } from 'src/enums/custom.exception.code';
 import { PrismaService } from 'src/infra/prisma/prisma.service';
 import { RedisService } from 'src/infra/redis/redis.service';
 import { FileService } from 'src/modules/file/file.service';
+import { LlmService } from '../llm/llm.service';
   
   
-  // TODO: LLM service 임시 구현
-  @Injectable()
-  export class LlmService {
-    async getAnswerFromBot(userMessage: string): Promise<string> {
-      return `BOT REPLY for: ${userMessage}`;
-    }
-  }
-  
+
   @Injectable()
   export class ChatService {
     constructor(
       private readonly prisma: PrismaService,
       private readonly redis: RedisService,
       private readonly fileService: FileService,
-      private readonly llmService: LlmService, // 필요하다 가정
+      private readonly llmService: LlmService,
+
     ) {}
   
     async getConversations(userId: number): Promise<ConversationListResponseDto> {
