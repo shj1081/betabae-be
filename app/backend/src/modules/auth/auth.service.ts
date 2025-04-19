@@ -16,8 +16,8 @@ export class AuthService {
 
   async registerAndLogin(dto: RegisterRequestDto) {
     // check if user already exists
-    const user = await this.prisma.user.findFirst({
-      where: { legal_name: dto.legal_name },
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
     });
     if (user)
       throw new BadRequestException(
