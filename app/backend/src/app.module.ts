@@ -5,9 +5,11 @@ import { ChatModule } from './modules/chat/chat.module';
 import { FileModule } from './modules/file/file.module';
 import { MatchModule } from './modules/match/match.module';
 import { UserModule } from './modules/user/user.module';
+import { FeedModule } from './modules/feed/feed.module';
+import { LlmModule } from './modules/llm/llm.module';
 
 @Module({
-  imports: [AuthModule, UserModule, FileModule, MatchModule, ChatModule],
+  imports: [AuthModule, UserModule, FileModule, MatchModule, ChatModule, FeedModule, LlmModule],
   controllers: [],
   providers: [],
 })

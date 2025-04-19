@@ -19,7 +19,27 @@ import { PrismaService } from 'src/infra/prisma/prisma.service';
 
 @Injectable()
 export class UserService {
+
   constructor(private prisma: PrismaService) {}
+
+  async getAllUsersExcept(currentUserId: number) {
+    return this.prisma.user.findMany({
+      where: { id: { not: currentUserId } },
+      select: {
+        id: true,
+        profile: {
+          select: {
+            nickname: true,
+            birthday: true,
+            gender: true,
+            city: true,
+            province: true,
+            profile_image: { select: { file_url: true } },
+          },
+        },
+      },
+    });
+  }
 
   async getUserProfile(userId: number) {
     // select를 이용하여 불필요 필드 차단 -> 쿼리 부담 줄임

@@ -20,11 +20,16 @@ import { ErrorResponseDto } from 'src/dto/common/error.response.dto';
 import { ExceptionCode } from 'src/enums/custom.exception.code';
 import { AuthGuard } from '../auth/auth.guard';
 import { ChatService } from './chat.service';
+import { ChatAnalysisService } from './chat-analysis.service';
+import { ChatAnalysisRequestDto } from 'src/dto/chat/chat-analysis.request.dto';
 
 @Controller('chat/conversations')
 @UseGuards(AuthGuard)
 export class ChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly chatAnalysisService: ChatAnalysisService,
+  ) {}
 
   /**
    * Get a list of conversations for the given user. This endpoint is called when the user navigates to the chat page.
@@ -152,5 +157,21 @@ export class ChatController {
     );
 
     return new BasicResponseDto('Image message sent successfully', message);
+  }
+
+  /**
+   * Analyze chat messages for a given messageId and its context.
+   * @param req The request object.
+   * @param dto The ChatAnalysisRequestDto containing the messageId.
+   * @returns A BasicResponseDto containing the analysis result.
+   */
+  @Post('analysis')
+  async analyzeChat(
+    @Req() req: Request,
+    @Body() dto: ChatAnalysisRequestDto,
+  ) {
+    const userId = Number(req['user'].id);
+    const result = await this.chatAnalysisService.analyzeChat(dto, userId);
+    return new BasicResponseDto('Chat analysis completed', result);
   }
 }
