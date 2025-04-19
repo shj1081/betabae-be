@@ -1,3 +1,4 @@
+// Love language scale: 1–5 (min 1, max 5)
 import { Expose, Transform } from 'class-transformer';
 
 export class UserLoveLanguageResponseDto {
