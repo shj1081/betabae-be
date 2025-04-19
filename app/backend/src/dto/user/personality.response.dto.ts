@@ -21,10 +21,6 @@ export class UserPersonalityResponseDto {
   
   @Expose()
   neuroticism: number;
-  
-  @Expose()
-  @Transform(({ value }) => value?.toISOString())
-  created_at: Date;
 
   @Expose()
   @Transform(({ value }) => value?.toISOString())
