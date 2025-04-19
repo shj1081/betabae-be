@@ -128,8 +128,8 @@ export class UserService {
 
       // 업데이트할 내용이 있는 경우만 업데이트
       if (Object.keys(profileData).length > 0) {
-        await this.prisma.user.update({
-          where: { id: userId },
+        await this.prisma.userProfile.update({
+          where: { user_id: userId },
           data: profileData,
         });
       }
